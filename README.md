@@ -1,10 +1,10 @@
-# strato: Air Quality Prediction & Monitoring
+# StratoSense: Air Quality Prediction & Monitoring
 
-strato is a web application developed for the NASA Space Apps Challenge 2025, addressing the "From Earthdata to Action: Cloud Computing with Earth Observation Data for Predicting Cleaner, Safer Skies" challenge.
+StratoSense is a web application developed for the NASA Space Apps Challenge 2025, addressing the "From Earthdata to Action: Cloud Computing with Earth Observation Data for Predicting Cleaner, Safer Skies" challenge.
 
 ## Project Overview
 
-strato leverages NASA Earth observation data to predict and visualize air quality trends, helping users make informed decisions about outdoor activities and health precautions. The application combines satellite data with machine learning to provide accurate air quality forecasts and visualizations.
+StratoSense leverages NASA Earth observation data to predict and visualize air quality trends, helping users make informed decisions about outdoor activities and health precautions. The application combines satellite data with machine learning to provide accurate air quality forecasts and visualizations.
 
 ### Key Features
 
@@ -37,8 +37,8 @@ strato leverages NASA Earth observation data to predict and visualize air qualit
 
 1. Clone the repository:
    ```
-   git clone https://github.com/shknth/strato.git
-   cd strato
+   git clone https://github.com/shknth/StratoSense.git
+   cd StratoSense
    ```
 
 2. Set up the frontend:
@@ -69,7 +69,7 @@ strato leverages NASA Earth observation data to predict and visualize air qualit
 ## Project Structure
 
 ```
-strato/
+StratoSense/
 ├── frontend/           # React frontend application
 │   ├── public/         # Static files
 │   └── src/            # React components and logic
@@ -92,7 +92,7 @@ strato/
 
 ## Contributors
 
-- Team strato - NASA Space Apps Challenge 2025
+- Team StratoSense - NASA Space Apps Challenge 2025
 
 ## License
 
