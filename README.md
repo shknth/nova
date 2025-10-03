@@ -1,10 +1,10 @@
-# StratoSense: Air Quality Prediction & Monitoring
+# strato: Air Quality Prediction & Monitoring
 
-StratoSense is a web application developed for the NASA Space Apps Challenge 2025, addressing the "From Earthdata to Action: Cloud Computing with Earth Observation Data for Predicting Cleaner, Safer Skies" challenge.
+strato is a web application developed for the NASA Space Apps Challenge 2025, addressing the "From Earthdata to Action: Cloud Computing with Earth Observation Data for Predicting Cleaner, Safer Skies" challenge.
 
 ## Project Overview
 
-StratoSense leverages NASA Earth observation data to predict and visualize air quality trends, helping users make informed decisions about outdoor activities and health precautions. The application combines satellite data with machine learning to provide accurate air quality forecasts and visualizations.
+strato leverages NASA Earth observation data to predict and visualize air quality trends, helping users make informed decisions about outdoor activities and health precautions. The application combines satellite data with machine learning to provide accurate air quality forecasts and visualizations.
 
 ### Key Features
 
@@ -92,7 +92,7 @@ strato/
 
 ## Contributors
 
-- Team StratoSense - NASA Space Apps Challenge 2025
+- Team strato - NASA Space Apps Challenge 2025
 
 ## License
 
