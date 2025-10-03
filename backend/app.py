@@ -98,7 +98,7 @@ def model_info():
     """Endpoint for retrieving information about the ML model"""
     global model
     
-    # Initialize model if not already done
+    # Initialize the model - AirQuality
     if model is None:
         model = AirQualityModel()
         X_train, y_train, _ = generate_sample_data()
