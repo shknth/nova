@@ -13,6 +13,7 @@ class AirQualityModel:
     This class will be expanded with actual model training and prediction
     once we have the NASA Earth observation data.
     """
+    # this is a comment
     
     def __init__(self):
         """Initialize the model components"""
