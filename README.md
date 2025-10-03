@@ -37,8 +37,8 @@ StratoSense leverages NASA Earth observation data to predict and visualize air q
 
 1. Clone the repository:
    ```
-   git clone https://github.com/shknth/strato.git
-   cd strato
+   git clone https://github.com/shknth/StratoSense.git
+   cd StratoSense
    ```
 
 2. Set up the frontend:
@@ -69,7 +69,7 @@ StratoSense leverages NASA Earth observation data to predict and visualize air q
 ## Project Structure
 
 ```
-strato/
+StratoSense/
 ├── frontend/           # React frontend application
 │   ├── public/         # Static files
 │   └── src/            # React components and logic
