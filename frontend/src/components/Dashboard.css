@@ -1,0 +1,128 @@
+.dashboard {
+  padding: 1.5rem;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #1e3a8a;
+}
+
+.dashboard-header p {
+  margin: 0.5rem 0 0;
+  color: #6b7280;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #374151;
+}
+
+.current-aqi {
+  text-align: center;
+}
+
+.aqi-value {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #1e3a8a;
+  margin-bottom: 0.5rem;
+}
+
+.aqi-category {
+  display: inline-block;
+  padding: 0.25rem 1rem;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.aqi-category.good {
+  background-color: #10B981;
+  color: white;
+}
+
+.aqi-category.moderate {
+  background-color: #FBBF24;
+  color: #1F2937;
+}
+
+.aqi-category.unhealthy {
+  background-color: #EF4444;
+  color: white;
+}
+
+.pollutant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.pollutant {
+  display: flex;
+  flex-direction: column;
+}
+
+.pollutant-name {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.pollutant-value {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #1e3a8a;
+}
+
+.forecast-chart {
+  grid-column: span 2;
+}
+
+.recommendations ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.recommendations li {
+  margin-bottom: 0.5rem;
+  color: #4b5563;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.error {
+  color: #EF4444;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .forecast-chart {
+    grid-column: span 1;
+  }
+}
