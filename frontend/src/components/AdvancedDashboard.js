@@ -267,14 +267,19 @@ const AdvancedDashboard = ({ onBack }) => {
       <div className="map-container-advanced">
         <h3 className="map-heading">Regional Air Quality</h3>
         <MapContainer 
-          center={[53.0, -7.5]} 
-          zoom={7}
-          style={{ height: '500px', width: '100%' }}
-        >
+        center={[53.0, -7.5]} 
+        zoom={7}
+        style={{ height: '500px', width: '100%' }}
+        maxBounds={[[-90, -180], [90, 180]]} 
+        minZoom={2} 
+        maxBoundsViscosity={1.0}
+      >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
+          noWrap={true} // Prevent tile repetition
+          bounds={[[-90, -180], [90, 180]]} // Set tile bounds
+        />
           {data.locations.map(location => (
             <React.Fragment key={location.id}>
               <Circle
