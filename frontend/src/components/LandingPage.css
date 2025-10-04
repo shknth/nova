@@ -1,10 +1,11 @@
 .landing-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  background: var(--bg-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 0;
+  transition: background-color 0.3s ease;
 }
 
 .landing-container {
@@ -18,10 +19,17 @@
   margin-bottom: 3rem;
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
 .landing-title {
   font-size: 3.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -31,7 +39,7 @@
 
 .landing-subtitle {
   font-size: 1.25rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 400;
   max-width: 600px;
   margin: 0 auto;
@@ -49,7 +57,7 @@
 
 .example-label {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
   font-weight: 500;
 }
@@ -63,14 +71,16 @@
 }
 
 .example-item {
-  background: white;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   font-size: 0.9rem;
-  color: #4b5563;
+  color: var(--text-secondary);
   font-style: italic;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-left: 3px solid #3b82f6;
+  box-shadow: 0 1px 3px var(--shadow);
+  border-left: 3px solid var(--accent-secondary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .landing-footer {
@@ -79,7 +89,7 @@
 }
 
 .landing-footer p {
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ThemeProvider } from './contexts/ThemeContext';
 import './App.css';
 import LandingPage from './components/LandingPage';
 import ResponseScreen from './components/ResponseScreen';
@@ -124,33 +125,35 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {isLoading && (
-        <motion.div 
-          className="loading-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div className="loading-content">
-            <div className="loading-spinner"></div>
-            <p>Analyzing air quality data...</p>
-          </div>
-        </motion.div>
-      )}
-      
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${currentScreen}-${userQuery}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {renderCurrentScreen()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        {isLoading && (
+          <motion.div 
+            className="loading-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="loading-content">
+              <div className="loading-spinner"></div>
+              <p>Analyzing air quality data...</p>
+            </div>
+          </motion.div>
+        )}
+        
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${currentScreen}-${userQuery}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderCurrentScreen()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </ThemeProvider>
   );
 }
 

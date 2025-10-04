@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft, faChartBar, faRobot } from '@fortawesome/free-solid-svg-icons';
 import ChatInput from './ChatInput';
 import './ResponseScreen.css';
 
@@ -22,9 +24,7 @@ const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) 
             className="back-button"
             onClick={onNewQuery}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <FontAwesomeIcon icon={faArrowLeft} />
             New Query
           </button>
           <h1 className="response-title">StratoSense</h1>
@@ -52,7 +52,7 @@ const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) 
             transition={{ delay: 0.6, duration: 0.5 }}
           >
             <div className="message-avatar ai-avatar">
-              <span>🤖</span>
+              <FontAwesomeIcon icon={faRobot} />
             </div>
             <div className="message-content">
               <p>{aiResponse || 'No response available'}</p>
@@ -67,12 +67,7 @@ const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) 
                   className="dashboard-button primary"
                   onClick={onViewDashboard}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
+                  <FontAwesomeIcon icon={faChartBar} />
                   View Dashboard
                 </button>
               </motion.div>

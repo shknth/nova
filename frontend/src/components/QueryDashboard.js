@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft, faChartBar } from '@fortawesome/free-solid-svg-icons';
 import { Line, Bar } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, 
@@ -139,9 +141,7 @@ const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <button className="back-button" onClick={onBack}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <FontAwesomeIcon icon={faArrowLeft} />
             Back
           </button>
           <div className="header-content">
@@ -251,12 +251,7 @@ const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
             className="advanced-dashboard-button"
             onClick={onAdvancedDashboard}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-              <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-              <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-              <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
-            </svg>
+            <FontAwesomeIcon icon={faChartBar} />
             View Advanced Dashboard
           </button>
         </motion.div>

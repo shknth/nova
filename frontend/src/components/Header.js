@@ -1,4 +1,5 @@
 import React from 'react';
+import ThemeToggle from './ThemeToggle';
 import './Header.css';
 
 const Header = () => {
@@ -8,14 +9,17 @@ const Header = () => {
         <h1>StratoSense</h1>
         <p>Air Quality Prediction & Monitoring</p>
       </div>
-      <nav className="nav">
-        <ul>
-          <li><a href="#dashboard">Dashboard</a></li>
-          <li><a href="#map">Map View</a></li>
-          <li><a href="#predictions">Predictions</a></li>
-          <li><a href="#about">About</a></li>
-        </ul>
-      </nav>
+      <div className="header-actions">
+        <nav className="nav">
+          <ul>
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#map">Map View</a></li>
+            <li><a href="#predictions">Predictions</a></li>
+            <li><a href="#about">About</a></li>
+          </ul>
+        </nav>
+        <ThemeToggle />
+      </div>
     </header>
   );
 };

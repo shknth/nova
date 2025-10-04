@@ -1,4 +1,6 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faThermometerHalf, faWind, faTint, faLeaf } from '@fortawesome/free-solid-svg-icons';
 import './BasicMetrics.css';
 
 const BasicMetrics = () => {
@@ -22,7 +24,9 @@ const BasicMetrics = () => {
   return (
     <div className="basic-metrics">
       <div className="metric-card">
-        <div className="metric-icon">🌡️</div>
+        <div className="metric-icon">
+          <FontAwesomeIcon icon={faThermometerHalf} />
+        </div>
         <div className="metric-info">
           <span className="metric-value">{metrics.temperature}°C</span>
           <span className="metric-label">Temperature</span>
@@ -30,7 +34,9 @@ const BasicMetrics = () => {
       </div>
 
       <div className="metric-card aqi-card">
-        <div className="metric-icon">🌬️</div>
+        <div className="metric-icon">
+          <FontAwesomeIcon icon={faLeaf} />
+        </div>
         <div className="metric-info">
           <span className="metric-value" style={{ color: aqiInfo.color }}>
             {metrics.aqi}
@@ -40,7 +46,9 @@ const BasicMetrics = () => {
       </div>
 
       <div className="metric-card">
-        <div className="metric-icon">💧</div>
+        <div className="metric-icon">
+          <FontAwesomeIcon icon={faTint} />
+        </div>
         <div className="metric-info">
           <span className="metric-value">{metrics.humidity}%</span>
           <span className="metric-label">Humidity</span>
@@ -48,7 +56,9 @@ const BasicMetrics = () => {
       </div>
 
       <div className="metric-card">
-        <div className="metric-icon">💨</div>
+        <div className="metric-icon">
+          <FontAwesomeIcon icon={faWind} />
+        </div>
         <div className="metric-info">
           <span className="metric-value">{metrics.windSpeed} km/h</span>
           <span className="metric-label">Wind Speed</span>
