@@ -15,11 +15,11 @@ L.Icon.Default.mergeOptions({
 const MapView = () => {
   // Sample data - this would come from your API in a real application
   const airQualityData = [
-    { id: 1, lat: 37.7749, lng: -122.4194, aqi: 42, location: 'San Francisco' },
-    { id: 2, lat: 34.0522, lng: -118.2437, aqi: 65, location: 'Los Angeles' },
-    { id: 3, lat: 40.7128, lng: -74.0060, aqi: 55, location: 'New York' },
-    { id: 4, lat: 41.8781, lng: -87.6298, aqi: 48, location: 'Chicago' },
-    { id: 5, lat: 29.7604, lng: -95.3698, aqi: 72, location: 'Houston' },
+    { id: 1, lat: 53.3498, lng: -6.2603, aqi: 42, location: 'Dublin' },
+    { id: 2, lat: 53.2707, lng: -9.0568, aqi: 65, location: 'Galway' },
+    { id: 3, lat: 52.6680, lng: -8.6305, aqi: 55, location: 'Limerick' },
+    { id: 4, lat: 53.4239, lng: -7.9407, aqi: 48, location: 'Athlone' },
+    { id: 5, lat: 51.8985, lng: -8.4756, aqi: 72, location: 'Cork' },
   ];
 
   // Function to determine circle color based on AQI

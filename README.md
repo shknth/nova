@@ -92,7 +92,7 @@ StratoSense/
 
 ## Contributors
 
-- Team StratoSense - NASA Space Apps Challenge 2025
+- Team CodeOrbiters - NASA Space Apps Challenge 2025
 
 ## License
 
