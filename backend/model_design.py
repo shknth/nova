@@ -11,8 +11,66 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.multioutput import MultiOutputRegressor
+from scipy.spatial import KDTree
+from multiprocessing import Pool, cpu_count
 import os
 import time
+from functools import partial
+
+def process_pm25_chunk_static(pm25_chunk, o3_data, datasets):
+    """
+    Static function to process a chunk of PM2.5 data in parallel
+    """
+    chunk_results = []
+    
+    # Create a temporary predictor instance for helper methods
+    predictor = AirQualityPredictor()
+    
+    for _, pm25_row in pm25_chunk.iterrows():
+        # Find matching O3 measurement
+        o3_match = o3_data[
+            (o3_data['datetime'] == pm25_row['datetime']) &
+            (o3_data['latitude'] == pm25_row['latitude']) &
+            (o3_data['longitude'] == pm25_row['longitude'])
+        ]
+        
+        if o3_match.empty:
+            continue
+            
+        o3_value = o3_match.iloc[0]['ground_o3']
+        
+        # Find nearest satellite data (spatial and temporal matching)
+        satellite_features = predictor.get_nearest_satellite_data(
+            datasets, pm25_row['datetime'], 
+            pm25_row['latitude'], pm25_row['longitude']
+        )
+        
+        # Find nearest weather data
+        weather_features = predictor.get_nearest_weather_data(
+            datasets, pm25_row['datetime'],
+            pm25_row['latitude'], pm25_row['longitude']
+        )
+        
+        # Combine all features
+        if satellite_features and weather_features:
+            row_data = {
+                'datetime': pm25_row['datetime'],
+                'latitude': pm25_row['latitude'],
+                'longitude': pm25_row['longitude'],
+                'city': pm25_row['city'],
+                
+                # Targets
+                'pm25': pm25_row['ground_pm25'],
+                'o3': o3_value,
+                'aqi': predictor.calculate_aqi(pm25_row['ground_pm25'], o3_value),
+                
+                # Features
+                **satellite_features,
+                **weather_features
+            }
+            chunk_results.append(row_data)
+    
+    return chunk_results
 
 class AirQualityPredictor:
     """
@@ -25,6 +83,7 @@ class AirQualityPredictor:
         self.scaler = StandardScaler()
         self.feature_names = []
         self.target_names = ['pm25', 'o3', 'aqi']
+        self.spatial_indices = {}  # Cache for KDTree indices
         
     def load_and_integrate_data(self, data_dir='data'):
         """
@@ -59,28 +118,27 @@ class AirQualityPredictor:
         
         return unified_data
     
-    def create_unified_dataset(self, datasets):
+    def build_spatial_indices(self, datasets):
         """
-        Create a unified dataset by spatially and temporally matching all sources
+        Build KDTree spatial indices for all datasets to speed up nearest neighbor searches
         """
-        print("🔗 Creating unified dataset...")
-        
-        # Use ground truth locations as base (since we need targets)
-        base_data = []
-        
-        # Get unique ground truth locations and times
-        pm25_data = datasets['openaq_pm25'].copy()
-        o3_data = datasets['openaq_o3'].copy()
-        
-        # Convert datetime columns
+        print("🌐 Building spatial indices...")
         for name, df in datasets.items():
-            df['datetime'] = pd.to_datetime(df['datetime'])
+            if 'latitude' in df.columns and 'longitude' in df.columns:
+                coords = df[['latitude', 'longitude']].values
+                self.spatial_indices[name] = {
+                    'tree': KDTree(coords),
+                    'data': df
+                }
+        print(f"✅ Built spatial indices for {len(self.spatial_indices)} datasets")
+    
+    def process_pm25_chunk(self, pm25_chunk, o3_data, datasets):
+        """
+        Process a chunk of PM2.5 data in parallel
+        """
+        chunk_results = []
         
-        pm25_data['datetime'] = pd.to_datetime(pm25_data['datetime'])
-        o3_data['datetime'] = pd.to_datetime(o3_data['datetime'])
-        
-        # For each ground truth measurement, find matching satellite/weather data
-        for _, pm25_row in pm25_data.iterrows():
+        for _, pm25_row in pm25_chunk.iterrows():
             # Find matching O3 measurement
             o3_match = o3_data[
                 (o3_data['datetime'] == pm25_row['datetime']) &
@@ -122,8 +180,58 @@ class AirQualityPredictor:
                     **satellite_features,
                     **weather_features
                 }
+                chunk_results.append(row_data)
+        
+        return chunk_results
+    
+    def create_unified_dataset(self, datasets):
+        """
+        Create a unified dataset by spatially and temporally matching all sources
+        Optimized with multiprocessing and spatial indexing
+        """
+        print("🔗 Creating unified dataset...")
+        
+        # Convert datetime columns
+        for name, df in datasets.items():
+            df['datetime'] = pd.to_datetime(df['datetime'])
+        
+        # Build spatial indices for fast nearest neighbor searches
+        self.build_spatial_indices(datasets)
+        
+        # Get unique ground truth locations and times
+        pm25_data = datasets['openaq_pm25'].copy()
+        o3_data = datasets['openaq_o3'].copy()
+        
+        pm25_data['datetime'] = pd.to_datetime(pm25_data['datetime'])
+        o3_data['datetime'] = pd.to_datetime(o3_data['datetime'])
+        
+        # Split PM2.5 data into chunks for parallel processing
+        num_cores = min(cpu_count(), 8)  # Limit to 8 cores max
+        chunk_size = max(1, len(pm25_data) // num_cores)
+        pm25_chunks = [pm25_data.iloc[i:i+chunk_size] for i in range(0, len(pm25_data), chunk_size)]
+        
+        print(f"🚀 Processing {len(pm25_data)} samples using {num_cores} cores in {len(pm25_chunks)} chunks")
+        
+        # Process chunks in parallel
+        try:
+            with Pool(processes=num_cores) as pool:
+                # Create partial function with fixed arguments
+                process_func = partial(process_pm25_chunk_static, o3_data=o3_data, datasets=datasets)
                 
-                base_data.append(row_data)
+                # Process all chunks in parallel
+                chunk_results = pool.map(process_func, pm25_chunks)
+        except Exception as e:
+            print(f"⚠️  Multiprocessing failed ({e}), falling back to sequential processing...")
+            # Fallback to sequential processing
+            chunk_results = []
+            for chunk in pm25_chunks:
+                result = process_pm25_chunk_static(chunk, o3_data, datasets)
+                chunk_results.append(result)
+        
+        # Flatten results from all chunks
+        base_data = []
+        for chunk_result in chunk_results:
+            base_data.extend(chunk_result)
         
         unified_df = pd.DataFrame(base_data)
         print(f"✅ Created unified dataset with {len(unified_df)} records")
@@ -131,6 +239,127 @@ class AirQualityPredictor:
         print(f"   Targets: pm25, o3, aqi")
         
         return unified_df
+    
+    def get_nearest_satellite_data_fast(self, datasets, target_time, target_lat, target_lon):
+        """
+        Find nearest satellite measurements using spatial indexing (optimized)
+        """
+        features = {}
+        target_coords = np.array([[target_lat, target_lon]])
+        
+        # TEMPO NO2 (hourly)
+        if 'tempo_no2' in self.spatial_indices:
+            no2_match = self.find_nearest_measurement_fast(
+                'tempo_no2', target_time, target_coords, 'no2'
+            )
+            features['tempo_no2'] = no2_match if no2_match else np.nan
+        
+        # TEMPO CH2O (hourly)
+        if 'tempo_ch2o' in self.spatial_indices:
+            ch2o_match = self.find_nearest_measurement_fast(
+                'tempo_ch2o', target_time, target_coords, 'ch2o'
+            )
+            features['tempo_ch2o'] = ch2o_match if ch2o_match else np.nan
+        
+        # TROPOMI CO (daily)
+        if 'tropomi_co' in self.spatial_indices:
+            co_match = self.find_nearest_measurement_fast(
+                'tropomi_co', target_time, target_coords, 'co', time_tolerance_hours=12
+            )
+            features['tropomi_co'] = co_match if co_match else np.nan
+        
+        # MODIS AOD (twice daily)
+        if 'modis_aod' in self.spatial_indices:
+            aod_match = self.find_nearest_measurement_fast(
+                'modis_aod', target_time, target_coords, 'aod', time_tolerance_hours=6
+            )
+            features['modis_aod'] = aod_match if aod_match else np.nan
+        
+        return features
+    
+    def get_nearest_weather_data_fast(self, datasets, target_time, target_lat, target_lon):
+        """
+        Find nearest weather measurements using spatial indexing (optimized)
+        """
+        features = {}
+        target_coords = np.array([[target_lat, target_lon]])
+        
+        # MERRA-2 Temperature
+        if 'merra2_temp' in self.spatial_indices:
+            temp_match = self.find_nearest_measurement_fast(
+                'merra2_temp', target_time, target_coords, 'temperature_2m'
+            )
+            features['temperature_2m'] = temp_match if temp_match else np.nan
+        
+        # MERRA-2 PBL Height
+        if 'merra2_pbl' in self.spatial_indices:
+            pbl_match = self.find_nearest_measurement_fast(
+                'merra2_pbl', target_time, target_coords, 'pbl_height'
+            )
+            features['pbl_height'] = pbl_match if pbl_match else np.nan
+        
+        # MERRA-2 Wind
+        if 'merra2_wind' in self.spatial_indices:
+            wind_match = self.find_nearest_measurement_fast(
+                'merra2_wind', target_time, target_coords, ['wind_U', 'wind_V', 'wind_speed']
+            )
+            if wind_match:
+                if isinstance(wind_match, dict):
+                    features.update(wind_match)
+                else:
+                    features['wind_speed'] = wind_match
+        
+        # GPM Precipitation
+        if 'gpm_precip' in self.spatial_indices:
+            precip_match = self.find_nearest_measurement_fast(
+                'gpm_precip', target_time, target_coords, 'precipitation'
+            )
+            features['precipitation'] = precip_match if precip_match else 0.0
+        
+        return features
+    
+    def find_nearest_measurement_fast(self, dataset_name, target_time, target_coords, 
+                                    value_col, time_tolerance_hours=2, spatial_tolerance=1.0):
+        """
+        Find the nearest measurement using KDTree spatial indexing (optimized)
+        """
+        if dataset_name not in self.spatial_indices:
+            return None
+        
+        spatial_data = self.spatial_indices[dataset_name]
+        tree = spatial_data['tree']
+        df = spatial_data['data']
+        
+        # Time filtering first
+        time_diff = abs((df['datetime'] - target_time).dt.total_seconds() / 3600)
+        time_mask = time_diff <= time_tolerance_hours
+        
+        if not time_mask.any():
+            return None
+        
+        # Get time-filtered data and rebuild spatial index for this subset
+        time_filtered_df = df[time_mask].copy()
+        if len(time_filtered_df) == 0:
+            return None
+        
+        # Find nearest spatial neighbors from time-filtered data
+        time_filtered_coords = time_filtered_df[['latitude', 'longitude']].values
+        time_filtered_tree = KDTree(time_filtered_coords)
+        
+        # Find nearest neighbor
+        distances, indices = time_filtered_tree.query(target_coords, k=1)
+        
+        if distances[0] > spatial_tolerance:
+            # If no match within spatial tolerance, return closest anyway
+            pass
+        
+        closest_row = time_filtered_df.iloc[indices[0]]
+        
+        # Return value(s)
+        if isinstance(value_col, list):
+            return {col: closest_row[col] for col in value_col if col in closest_row}
+        else:
+            return closest_row[value_col] if value_col in closest_row else None
     
     def get_nearest_satellite_data(self, datasets, target_time, target_lat, target_lon):
         """
