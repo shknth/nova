@@ -3,11 +3,12 @@ from dotenv import load_dotenv
 import os
 import json
 from typing import Dict, Optional, Union
+from .config.ai_config import INPUT_AGENT_PROMPT
 
 # Load environment variables
 load_dotenv()
 
-class GeminiHandler:
+class InputAgent:
     def __init__(self):
         api_key = os.getenv('GOOGLE_AI_STUDIO_KEY')
         if not api_key:

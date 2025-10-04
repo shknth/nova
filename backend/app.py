@@ -3,7 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import json
-from utils.gemini_handler import GeminiHandler
+from utils import InputAgent, OutputAgent
 
 # Load environment variables
 load_dotenv()
@@ -11,7 +11,8 @@ load_dotenv()
 # Initialize Flask app and components
 app = Flask(__name__)
 CORS(app)
-gemini_handler = GeminiHandler()
+input_agent = InputAgent()
+output_agent = OutputAgent()
 
 # Error handling
 class InvalidUsage(Exception):
@@ -98,14 +99,35 @@ def extract_parameters():
 
     try:
         app.logger.info("Processing request...")
-        # Extract parameters using Gemini
-        extracted_params = gemini_handler.extract_parameters(data['prompt'])
+        # Extract parameters using Input Agent
+        extracted_params = input_agent.extract_parameters(data['prompt'])
         
         # Add original prompt to parameters
         extracted_params['original_prompt'] = data['prompt']
         
-        # Validate the extracted parameters and get response
-        result = gemini_handler.validate_parameters(extracted_params)
+        # Get model predictions (placeholder for now)
+        predictions = {
+            "satellite_data": {
+                "tempo_no2": 2.5e15,
+                "tempo_ch2o": 8e14,
+                "tropomi_co": 1.8e18,
+                "modis_aod": 0.25
+            },
+            "weather_data": {
+                "temperature_2m": 285.5,
+                "pbl_height": 800,
+                "wind_speed": 5.2,
+                "precipitation": 0.0
+            },
+            "air_quality": {
+                "pm25": 28.5,
+                "o3": 85.2,
+                "aqi": 95
+            }
+        }
+        
+        # Generate response using Output Agent
+        result = output_agent.analyze_predictions(predictions, extracted_params)
         
         app.logger.info(f"Final response: {result}")
         app.logger.info("=== Request Processing Completed ===")
