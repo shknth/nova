@@ -1,0 +1,74 @@
+.basic-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 0 1rem;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.metric-icon {
+  font-size: 2rem;
+  margin-right: 1rem;
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.aqi-card .metric-value {
+  color: inherit; /* Will be overridden by inline style */
+}
+
+@media (max-width: 768px) {
+  .basic-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+  
+  .metric-card {
+    padding: 1rem;
+  }
+  
+  .metric-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+  }
+  
+  .metric-value {
+    font-size: 1.25rem;
+  }
+  
+  .metric-label {
+    font-size: 0.8rem;
+  }
+}

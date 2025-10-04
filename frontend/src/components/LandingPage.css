@@ -1,0 +1,126 @@
+.landing-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.landing-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 2rem;
+}
+
+.landing-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.landing-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.landing-subtitle {
+  font-size: 1.25rem;
+  color: #64748b;
+  font-weight: 400;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.chat-section {
+  margin: 4rem 0;
+}
+
+.example-queries {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.example-label {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.example-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.example-item {
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #4b5563;
+  font-style: italic;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 3px solid #3b82f6;
+}
+
+.landing-footer {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.landing-footer p {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .landing-page {
+    padding: 1rem 0;
+  }
+  
+  .landing-container {
+    padding: 0 1rem;
+  }
+  
+  .landing-title {
+    font-size: 2.5rem;
+  }
+  
+  .landing-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .example-items {
+    gap: 0.5rem;
+  }
+  
+  .example-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .chat-section {
+    margin: 2rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-title {
+    font-size: 2rem;
+  }
+  
+  .landing-subtitle {
+    font-size: 1rem;
+  }
+}
