@@ -77,7 +77,8 @@
 }
 
 .ai-avatar {
-  background: #f1f5f9;
+  background: #1e3a8a;
+  color: white;
   font-size: 1.2rem;
 }
 
@@ -100,6 +101,15 @@
   margin: 0;
   line-height: 1.6;
   font-size: 1rem;
+}
+
+/* Theme-specific AI text color */
+[data-theme="dark"] .ai-content .ai-text {
+  color: #1a1a1a !important;
+}
+
+[data-theme="light"] .ai-content .ai-text {
+  color: inherit;
 }
 
 .action-buttons {

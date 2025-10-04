@@ -1,9 +1,12 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThermometerHalf, faWind, faTint, faLeaf } from '@fortawesome/free-solid-svg-icons';
+import { useTheme } from '../contexts/ThemeContext';
 import './BasicMetrics.css';
 
 const BasicMetrics = () => {
+  const { isDark } = useTheme();
+  
   // Mock data - will be replaced with real API data
   const metrics = {
     temperature: 22,
@@ -22,14 +25,14 @@ const BasicMetrics = () => {
   const aqiInfo = getAQIStatus(metrics.aqi);
 
   return (
-    <div className="basic-metrics">
+    <div className="basic-metrics" data-theme={isDark ? 'dark' : 'light'}>
       <div className="metric-card">
         <div className="metric-icon">
           <FontAwesomeIcon icon={faThermometerHalf} />
         </div>
         <div className="metric-info">
-          <span className="metric-value">{metrics.temperature}°C</span>
-          <span className="metric-label">Temperature</span>
+          <span className="metric-value themed-value">{metrics.temperature}°C</span>
+          <span className="metric-label themed-label">Temperature</span>
         </div>
       </div>
 
@@ -41,7 +44,7 @@ const BasicMetrics = () => {
           <span className="metric-value" style={{ color: aqiInfo.color }}>
             {metrics.aqi}
           </span>
-          <span className="metric-label">{aqiInfo.status}</span>
+          <span className="metric-label themed-label">{aqiInfo.status}</span>
         </div>
       </div>
 
@@ -50,8 +53,8 @@ const BasicMetrics = () => {
           <FontAwesomeIcon icon={faTint} />
         </div>
         <div className="metric-info">
-          <span className="metric-value">{metrics.humidity}%</span>
-          <span className="metric-label">Humidity</span>
+          <span className="metric-value themed-value">{metrics.humidity}%</span>
+          <span className="metric-label themed-label">Humidity</span>
         </div>
       </div>
 
@@ -60,8 +63,8 @@ const BasicMetrics = () => {
           <FontAwesomeIcon icon={faWind} />
         </div>
         <div className="metric-info">
-          <span className="metric-value">{metrics.windSpeed} km/h</span>
-          <span className="metric-label">Wind Speed</span>
+          <span className="metric-value themed-value">{metrics.windSpeed} km/h</span>
+          <span className="metric-label themed-label">Wind Speed</span>
         </div>
       </div>
     </div>
