@@ -22,13 +22,17 @@
 # --------------------------------------------------------------------------------------
 
 from openaq import OpenAQ
-import pandas as pd
-api = OpenAQ(api_key="edca264c44c7f9f67ed3c43e6e53fd7eddc84fa474b3ef268bddabe26d3b6f7eY")
-# Example: get recent NO2 measurements in a country (e.g., US) in a pandas DataFrame
-status, resp = api.measurements(city='Dublin', parameter='no2', date_from='2025-08-30', date_to='2025-09-01', df=True)
 
-df=pd.DataFrame(resp)
-df.to_csv("openaq_no2_dublin.csv", index=False)
+client = OpenAQ(api_key='edca264c44c7f9f67ed3c43e6e53fd7eddc84fa474b3ef268bddabe26d3b6f7e')
+
+location = client.sensors.get(2178)
+
+client.close()
+
+print(location)
+
+
+
 
 # --------------------------------------------------------------------------------------
 
