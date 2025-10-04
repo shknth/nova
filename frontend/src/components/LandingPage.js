@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import BasicMetrics from './BasicMetrics';
 import ChatInput from './ChatInput';
+import ThemeToggle from './ThemeToggle';
 import './LandingPage.css';
 
 const LandingPage = ({ onQuerySubmit }) => {
@@ -23,6 +24,10 @@ const LandingPage = ({ onQuerySubmit }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
+          <div className="header-top">
+            <div></div> {/* Spacer for centering */}
+            <ThemeToggle />
+          </div>
           <h1 className="landing-title">StratoSense</h1>
           <p className="landing-subtitle">
             Ask me anything about air quality and health recommendations

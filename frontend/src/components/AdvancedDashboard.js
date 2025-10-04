@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faArrowLeft, 
+  faChartBar, 
+  faChartLine, 
+  faFlask, 
+  faHeart, 
+  faMapMarkerAlt 
+} from '@fortawesome/free-solid-svg-icons';
 import { Line, Bar, Doughnut, Scatter } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, 
@@ -71,11 +80,11 @@ const AdvancedDashboard = ({ onBack }) => {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'forecasts', label: 'Forecasts', icon: '🔮' },
-    { id: 'pollutants', label: 'Pollutants', icon: '🧪' },
-    { id: 'health', label: 'Health Impact', icon: '❤️' },
-    { id: 'map', label: 'Regional Map', icon: '🗺️' }
+    { id: 'overview', label: 'Overview', icon: faChartBar },
+    { id: 'forecasts', label: 'Forecasts', icon: faChartLine },
+    { id: 'pollutants', label: 'Pollutants', icon: faFlask },
+    { id: 'health', label: 'Health Impact', icon: faHeart },
+    { id: 'map', label: 'Regional Map', icon: faMapMarkerAlt }
   ];
 
   const renderOverview = () => {
@@ -321,9 +330,7 @@ const AdvancedDashboard = ({ onBack }) => {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <button className="back-button" onClick={onBack}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <FontAwesomeIcon icon={faArrowLeft} />
             Back
           </button>
           <h1>Advanced Air Quality Dashboard</h1>
@@ -341,7 +348,9 @@ const AdvancedDashboard = ({ onBack }) => {
               className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <span className="tab-icon">{tab.icon}</span>
+              <span className="tab-icon">
+                <FontAwesomeIcon icon={tab.icon} />
+              </span>
               <span className="tab-label">{tab.label}</span>
             </button>
           ))}

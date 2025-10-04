@@ -3,9 +3,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: #1e3a8a;
-  color: white;
+  background-color: var(--header-bg);
+  color: var(--header-text);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .logo h1 {
@@ -32,7 +39,7 @@
 }
 
 .nav a {
-  color: white;
+  color: var(--header-text);
   text-decoration: none;
   font-weight: 500;
   transition: opacity 0.2s;
@@ -48,13 +55,15 @@
     padding: 1rem;
   }
   
-  .nav {
+  .header-actions {
     margin-top: 1rem;
     width: 100%;
+    justify-content: space-between;
   }
   
   .nav ul {
-    justify-content: space-between;
+    justify-content: center;
+    gap: 1rem;
   }
   
   .nav li {
