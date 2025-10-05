@@ -5,9 +5,10 @@ Output Agent for processing model predictions and generating user-friendly respo
 import json
 import logging
 import os
+import numpy as np
 from dotenv import load_dotenv
 import google.generativeai as genai
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 # Load environment variables
 load_dotenv()
@@ -45,6 +46,23 @@ class OutputAgent:
             }
         """
         try:
+            # Convert numpy values to Python native types
+            def convert_numpy_values(obj: Any) -> Any:
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return round(float(obj), 2)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                elif isinstance(obj, dict):
+                    return {k: convert_numpy_values(v) for k, v in obj.items()}
+                elif isinstance(obj, (list, tuple)):
+                    return [convert_numpy_values(item) for item in obj]
+                return obj
+            
+            # Convert predictions before JSON serialization
+            converted_predictions = convert_numpy_values(predictions)
+            
             # Use AI to analyze predictions and generate response
             analysis_prompt = f"""You are an expert air quality analyst. Analyze the provided data and user context to generate a comprehensive response.
 
@@ -59,7 +77,7 @@ EXTRACTED CONTEXT:
 - Query Intent: {user_context.get('query_intent', 'analysis')}
 
 AIR QUALITY DATA:
-{json.dumps(predictions, indent=2)}
+{json.dumps(converted_predictions, indent=2)}
 
 Generate a response that:
 1. Directly addresses the user's specific query and location
