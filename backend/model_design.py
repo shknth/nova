@@ -160,8 +160,9 @@ class AirQualityPredictor:
             'tempo_ch2o': 'tempo_hcho_hcho_weight', 
             'tropomi_co': 'tempo_co_co_vmr',
             'modis_aod': 'aerosol',
-            # Weather conditions
-            'temperature_2m': 'temperature_2m',
+            # Weather conditions (MERRA-2 data)
+            'temperature_2m': 'T2M',  # Temperature in Kelvin
+            'humidity': 'QV2M',       # Specific humidity
             'wind_speed': 'wind_speed',
             'precipitation': 'precipitation',  # Will use 0 if not available
             # Air quality
@@ -339,6 +340,16 @@ class AirQualityPredictor:
         o3 = pred_dict.get('o3', 0)
         aqi = self.calculate_aqi(pm25, o3)
         
+        # Convert weather values for frontend
+        temp_kelvin = pred_dict.get('temperature_2m', 273.15)
+        temp_celsius = temp_kelvin - 273.15  # Convert Kelvin to Celsius
+        
+        specific_humidity = pred_dict.get('humidity', 0.01)  # kg/kg
+        relative_humidity = self.convert_specific_to_relative_humidity(specific_humidity, temp_kelvin)
+        
+        wind_speed_ms = pred_dict.get('wind_speed', 0)
+        wind_speed_kmh = wind_speed_ms * 3.6  # Convert m/s to km/h if needed
+        
         # Structure the response exactly as you requested
         result = {
             "satellite_data": {
@@ -348,15 +359,23 @@ class AirQualityPredictor:
                 "modis_aod": pred_dict.get('modis_aod', 0)
             },
             "weather_data": {
-                "temperature_2m": pred_dict.get('temperature_2m', 0),
+                "temperature_2m": temp_celsius,  # Converted to Celsius
+                "humidity": relative_humidity,   # Converted to relative humidity %
                 "pbl_height": 800,  # Default value - add if available in dataset
-                "wind_speed": pred_dict.get('wind_speed', 0),
+                "wind_speed": wind_speed_kmh,   # Ensure km/h
                 "precipitation": pred_dict.get('precipitation', 0)
             },
             "air_quality": {
                 "pm25": pred_dict.get('pm25', 0),
                 "o3": pred_dict.get('o3', 0),
                 "aqi": aqi  # CALCULATED from PM2.5 + O3
+            },
+            # Add frontend-specific metrics for easy access
+            "frontend_metrics": {
+                "temperature": round(temp_celsius, 1),      # °C for frontend
+                "aqi": round(aqi, 0),                       # AQI for frontend
+                "humidity": round(relative_humidity, 0),    # % for frontend  
+                "windSpeed": round(wind_speed_kmh, 1)       # km/h for frontend
             }
         }
         
@@ -387,6 +406,32 @@ class AirQualityPredictor:
         
         # Return maximum AQI (worst pollutant determines overall AQI)
         return max(pm25_aqi, o3_aqi)
+    
+    def convert_specific_to_relative_humidity(self, specific_humidity, temperature_k, pressure=101325):
+        """
+        Convert specific humidity (kg/kg) to relative humidity (%)
+        Simplified conversion for weather display
+        """
+        try:
+            # Simplified conversion - more accurate would need actual pressure
+            # This gives approximate relative humidity for display purposes
+            temp_c = temperature_k - 273.15
+            
+            # Approximate saturation vapor pressure (hPa) using Magnus formula
+            es = 6.112 * np.exp((17.67 * temp_c) / (temp_c + 243.5))
+            
+            # Convert specific humidity to mixing ratio
+            mixing_ratio = specific_humidity / (1 - specific_humidity)
+            
+            # Approximate relative humidity
+            rh = (mixing_ratio * pressure / 100) / es * 100
+            
+            # Clamp between 0-100%
+            return max(0, min(100, rh))
+            
+        except:
+            # Fallback: rough approximation
+            return min(100, specific_humidity * 10000)  # Very rough conversion
     
 def run_dry_run_pipeline(sample_size=100, model_type='xgboost'):
     """

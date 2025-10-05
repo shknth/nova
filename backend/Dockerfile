@@ -7,6 +7,7 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/service_account.json
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \

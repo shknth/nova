@@ -151,6 +151,17 @@ class ApiService {
       throw new Error('Failed to fetch model information');
     }
   }
+
+  // Weather Metrics API for frontend
+  async getWeatherMetrics(location = null) {
+    try {
+      const params = location ? { location } : {};
+      const response = await apiClient.get('/weather-metrics', { params });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to fetch weather metrics');
+    }
+  }
 }
 
 // Export singleton instance
@@ -167,7 +178,8 @@ export const {
   getHealthImpactData,
   getRegionalData,
   getPredictions,
-  getModelInfo
+  getModelInfo,
+  getWeatherMetrics
 } = apiService;
 
 export default apiService;

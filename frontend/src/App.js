@@ -127,6 +127,24 @@ function App() {
   return (
     <ThemeProvider>
       <div className="App">
+        {/* Atmospheric particles for enhanced depth */}
+        <div className="atmospheric-particles"></div>
+        
+        {/* Temporary test element to verify changes are loading */}
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          background: 'rgba(255, 0, 0, 0.8)',
+          color: 'white',
+          padding: '5px 10px',
+          borderRadius: '5px',
+          fontSize: '12px',
+          zIndex: 9999
+        }}>
+          ✨ Cloudy UI Active
+        </div>
+        
         {isLoading && (
           <motion.div 
             className="loading-overlay"
