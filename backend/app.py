@@ -22,6 +22,7 @@ CORS(app)
 input_agent = InputAgent()
 output_agent = OutputAgent()
 
+
 # Initialize ML model and geocoding service
 print("🚀 Initializing Air Quality Prediction Model...")
 predictor = AirQualityPredictor()
@@ -94,14 +95,18 @@ def get_weather_metrics():
         
         # Get comprehensive predictions
         predictions = predictor.predict_comprehensive(lat, lon, current_time)
-        
+
+        # Convert numpy types to native Python types and round to 2 decimal places
+        metrics = predictions['frontend_metrics']
+        converted_metrics = {k: round(float(v), 2) if hasattr(v, 'item') else v for k, v in metrics.items()}
+
         # Return just the frontend metrics
         return jsonify({
             'status': 'success',
             'location': default_location,
             'coordinates': {'lat': lat, 'lon': lon},
             'timestamp': current_time,
-            'metrics': predictions['frontend_metrics']
+            'metrics': converted_metrics
         })
         
     except Exception as e:
@@ -182,7 +187,7 @@ def extract_parameters():
         
         # Extract location and datetime from parameters
         location_name = extracted_params.get('location', 'New York')  # Default location
-        datetime_str = extracted_params.get('datetime', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))  # Default to current time
+        datetime_str = extracted_params.get('datetime', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))  # Default time
         
         app.logger.info(f"Location: {location_name}, DateTime: {datetime_str}")
         

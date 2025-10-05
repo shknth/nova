@@ -72,11 +72,168 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
 .App {
   min-height: 100vh;
   position: relative;
+  overflow: hidden;
+}
+
+/* Cloudy Background Effect - Much More Visible */
+.App::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.6) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.7) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255, 255, 255, 0.5) 0%, transparent 50%),
+    radial-gradient(circle at 90% 10%, rgba(120, 119, 198, 0.6) 0%, transparent 50%),
+    radial-gradient(circle at 10% 90%, rgba(255, 255, 255, 0.7) 0%, transparent 50%),
+    linear-gradient(135deg, 
+      rgba(135, 206, 235, 0.4) 0%, 
+      rgba(255, 255, 255, 0.3) 25%, 
+      rgba(176, 196, 222, 0.5) 50%, 
+      rgba(255, 255, 255, 0.2) 75%, 
+      rgba(135, 206, 235, 0.4) 100%
+    );
+  filter: blur(30px);
+  animation: cloudFloat 20s ease-in-out infinite;
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Additional cloud layer for depth */
+.App::after {
+  content: '';
+  position: fixed;
+  top: -30%;
+  left: -30%;
+  width: 160%;
+  height: 160%;
+  background: 
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 60%),
+    radial-gradient(circle at 30% 70%, rgba(135, 206, 235, 0.6) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  filter: blur(50px);
+  animation: cloudFloat 25s ease-in-out infinite reverse;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes cloudFloat {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateX(20px) translateY(-10px) rotate(1deg);
+  }
+  50% {
+    transform: translateX(-15px) translateY(15px) rotate(-1deg);
+  }
+  75% {
+    transform: translateX(10px) translateY(-5px) rotate(0.5deg);
+  }
+}
+
+/* Dark theme cloud adjustments */
+:root.dark .App::before {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(148, 163, 184, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(148, 163, 184, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.18) 0%, transparent 50%),
+    radial-gradient(circle at 10% 90%, rgba(148, 163, 184, 0.12) 0%, transparent 50%),
+    linear-gradient(135deg, 
+      rgba(30, 58, 138, 0.08) 0%, 
+      rgba(51, 65, 85, 0.05) 25%, 
+      rgba(59, 130, 246, 0.1) 50%, 
+      rgba(51, 65, 85, 0.03) 75%, 
+      rgba(30, 58, 138, 0.06) 100%
+    );
+}
+
+:root.dark .App::after {
+  background: 
+    radial-gradient(circle at 70% 30%, rgba(148, 163, 184, 0.06) 0%, transparent 60%),
+    radial-gradient(circle at 30% 70%, rgba(59, 130, 246, 0.1) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.04) 0%, transparent 70%);
+}
+
+/* Atmospheric particles for enhanced depth */
+.App .atmospheric-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.atmospheric-particles::before,
+.atmospheric-particles::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  animation: float 15s linear infinite;
+}
+
+.atmospheric-particles::before {
+  top: -10px;
+  left: 20%;
+  animation-delay: 0s;
+  animation-duration: 20s;
+}
+
+.atmospheric-particles::after {
+  top: -10px;
+  left: 80%;
+  animation-delay: 5s;
+  animation-duration: 25s;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(-10px) translateX(0px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) translateX(50px);
+    opacity: 0;
+  }
+}
+
+/* Enhanced glass morphism for better integration */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+}
+
+:root.dark .glass-effect {
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 /* Loading overlay */
@@ -86,13 +243,18 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg-primary);
-  backdrop-filter: blur(8px);
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   opacity: 0.95;
+}
+
+:root.dark .loading-overlay {
+  background: rgba(15, 23, 42, 0.8);
 }
 
 .loading-content {

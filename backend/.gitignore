@@ -12,3 +12,5 @@ venv/
 # IDE
 .vscode/
 .idea/
+data/
+preprocessed_data/
