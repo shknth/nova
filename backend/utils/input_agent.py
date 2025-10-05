@@ -25,8 +25,20 @@ class InputAgent:
         {
             "location": "the location mentioned in the text, or null if none found",
             "time_descriptor": "any time reference mentioned, or null if none found",
-            "health_context": "any health or activity context mentioned, or null if none found"
+            "context_type": "one of: industrial, traffic, residential, health, outdoor_activity, general",
+            "analysis_depth": "brief or detailed",
+            "special_concerns": ["list of specific concerns or requirements mentioned"],
+            "query_intent": "the main purpose of the query (forecast, analysis, validation, etc.)"
         }
+        Consider:
+        - "industrial area", "industrial park", "factory", "manufacturing" → industrial
+        - "asthma", "respiratory", "health" → health
+        - "outdoor activities", "exercise", "sports" → outdoor_activity
+        - "traffic", "highway", "road" → traffic
+        - "this month", "this week", "today" → detailed analysis
+        - "quick", "brief" → brief analysis
+        - "understand", "analyze", "source" → analysis intent
+        - "forecast", "prediction" → forecast intent
         DO NOT wrap the JSON in code blocks. Return ONLY the raw JSON object."""
 
     def extract_parameters(self, prompt: str) -> Dict[str, Optional[str]]:
@@ -62,7 +74,7 @@ class InputAgent:
                     current_app.logger.info(f"{key}: {value}")
                 
                 # Validate required fields
-                required_fields = ['location', 'time_descriptor', 'health_context']
+                required_fields = ['location', 'time_descriptor', 'context_type', 'analysis_depth', 'special_concerns', 'query_intent']
                 for field in required_fields:
                     if field not in extracted_params:
                         current_app.logger.info(f"Missing required field: {field}")
@@ -76,7 +88,10 @@ class InputAgent:
                 return {
                     'location': None,
                     'time_descriptor': None,
-                    'health_context': None
+                    'context_type': None,
+                    'analysis_depth': None,
+                    'special_concerns': None,
+                    'query_intent': None
                 }
                 
         except Exception as e:
@@ -86,61 +101,78 @@ class InputAgent:
 
     def validate_parameters(self, params: Dict[str, Optional[str]]) -> Dict[str, Union[str, list]]:
         """
-        Validate the extracted parameters and return appropriate response format
+        Use AI to validate parameters and determine if more information is needed
         """
         from flask import current_app
-        current_app.logger.info("=== Parameter Validation Started ===")
-        missing = []
+        current_app.logger.info("=== AI Parameter Validation Started ===")
         
-        # Check for required parameters
-        if not params.get('location'):
-            missing.append('location')
-            current_app.logger.info("Missing required parameter: location")
+        # Use AI to validate and determine if more information is needed
+        validation_prompt = f"""Analyze these extracted parameters and determine if they are sufficient for air quality analysis:
+
+Parameters: {json.dumps(params, indent=2)}
+
+Respond with ONLY a JSON object in this format:
+{{
+    "sufficient": true/false,
+    "missing_information": ["list of missing critical information"],
+    "validation_message": "brief message about what's missing or confirmation that parameters are sufficient"
+}}
+
+Consider:
+- Location is critical for any air quality query
+- Time reference helps determine forecast vs current conditions
+- Context type helps determine analysis approach
+- Query intent helps understand what the user wants
+
+Return ONLY the raw JSON object."""
+        
+        try:
+            response = self.model.generate_content(validation_prompt)
+            validation_result = json.loads(response.text.strip())
             
-        # Time is required for forecasting
-        if not params.get('time_descriptor'):
-            missing.append('time_descriptor')
-            current_app.logger.info("Missing required parameter: time_descriptor")
-        
-        # Health context is optional, so we don't check for it
-        current_app.logger.info(f"Optional parameter 'health_context': {params.get('health_context')}")
-        
-        # Generate display text (hardcoded for now)
-        if missing:
-            display_text = f"I need more information to provide an accurate forecast. Could you please specify the {' and '.join(missing)}?"
-            status_code = 422  # Unprocessable Entity
-            current_app.logger.info(f"Validation failed. Missing: {missing}")
-        else:
-            # Hardcoded response for testing
-            location = params['location']
-            time = params['time_descriptor']
-            health_context = params.get('health_context', 'general conditions')
+            current_app.logger.info(f"AI Validation result: {validation_result}")
             
-            display_text = f"Based on the forecasted conditions for {location} {time}, "
-            if health_context:
-                display_text += f"considering {health_context}, "
-            display_text += "the air quality is expected to be good with an AQI of 42. It's a great time for outdoor activities!"
-            status_code = 200
-            current_app.logger.info("Validation successful")
-        
-        current_app.logger.info("=== Parameter Validation Completed ===")
-        
-        if missing:
+            if validation_result.get('sufficient', False):
+                return {
+                    'status_code': 200,
+                    'display_text': "Parameters validated successfully",
+                    'metadata': {
+                        'status': 'success',
+                        'extracted_parameters': params,
+                        'validation_message': validation_result.get('validation_message', 'Parameters are sufficient')
+                    }
+                }
+            else:
+                missing_info = validation_result.get('missing_information', [])
+                return {
+                    'status_code': 422,
+                    'display_text': f"I need more information to provide an accurate analysis. {validation_result.get('validation_message', 'Please provide more details.')}",
+                    'metadata': {
+                        'status': 'incomplete',
+                        'missing_information': missing_info,
+                        'extracted_parameters': params,
+                        'validation_message': validation_result.get('validation_message', 'Missing critical information')
+                    }
+                }
+                
+        except Exception as e:
+            current_app.logger.error(f"Error in AI validation: {str(e)}")
+            # Fallback to basic validation
+            if not params.get('location'):
+                return {
+                    'status_code': 422,
+                    'display_text': "I need to know the location to provide air quality information. Where would you like to check?",
+                    'metadata': {
+                        'status': 'incomplete',
+                        'missing_information': ['location'],
+                        'extracted_parameters': params
+                    }
+                }
             return {
-                'status_code': status_code,
-                'display_text': display_text,
+                'status_code': 200,
+                'display_text': "Parameters validated successfully",
                 'metadata': {
-                    'status': 'incomplete',
-                    'missing_information': missing,
+                    'status': 'success',
                     'extracted_parameters': params
                 }
             }
-            
-        return {
-            'status_code': status_code,
-            'display_text': display_text,
-            'metadata': {
-                'status': 'success',
-                'extracted_parameters': params
-            }
-        }

@@ -10,25 +10,8 @@ class GeocodingService:
             'User-Agent': 'NASA-SpaceApps-AirQuality/1.0'
         }
         
-        # Cache for frequently requested locations
-        self.location_cache = {
-            # Major US cities (pre-cached for faster response)
-            'los angeles': {'lat': 34.0522, 'lon': -118.2437, 'display_name': 'Los Angeles, CA, USA'},
-            'new york': {'lat': 40.7128, 'lon': -74.0060, 'display_name': 'New York, NY, USA'},
-            'chicago': {'lat': 41.8781, 'lon': -87.6298, 'display_name': 'Chicago, IL, USA'},
-            'houston': {'lat': 29.7604, 'lon': -95.3698, 'display_name': 'Houston, TX, USA'},
-            'phoenix': {'lat': 33.4484, 'lon': -112.0740, 'display_name': 'Phoenix, AZ, USA'},
-            'philadelphia': {'lat': 39.9526, 'lon': -75.1652, 'display_name': 'Philadelphia, PA, USA'},
-            'san antonio': {'lat': 29.4241, 'lon': -98.4936, 'display_name': 'San Antonio, TX, USA'},
-            'san diego': {'lat': 32.7157, 'lon': -117.1611, 'display_name': 'San Diego, CA, USA'},
-            'dallas': {'lat': 32.7767, 'lon': -96.7970, 'display_name': 'Dallas, TX, USA'},
-            'san jose': {'lat': 37.3382, 'lon': -121.8863, 'display_name': 'San Jose, CA, USA'},
-            'austin': {'lat': 30.2672, 'lon': -97.7431, 'display_name': 'Austin, TX, USA'},
-            'denver': {'lat': 39.7392, 'lon': -104.9903, 'display_name': 'Denver, CO, USA'},
-            'seattle': {'lat': 47.6062, 'lon': -122.3321, 'display_name': 'Seattle, WA, USA'},
-            'atlanta': {'lat': 33.7490, 'lon': -84.3880, 'display_name': 'Atlanta, GA, USA'},
-            'miami': {'lat': 25.7617, 'lon': -80.1918, 'display_name': 'Miami, FL, USA'}
-        }
+        # Cache for frequently requested locations (empty initially, populated dynamically)
+        self.location_cache = {}
     
     def geocode(self, location_name: str) -> Optional[Dict[str, float]]:
         """
@@ -51,12 +34,11 @@ class GeocodingService:
             return self.location_cache[normalized_name]
         
         try:
-            # Make API request to Nominatim
+            # Make API request to Nominatim (global search)
             params = {
                 'q': location_name,
                 'format': 'json',
                 'limit': 1,
-                'countrycodes': 'us',  # Focus on US locations for air quality data
                 'addressdetails': 1
             }
             
@@ -136,17 +118,17 @@ class GeocodingService:
     
     def is_valid_coordinates(self, lat: float, lon: float) -> bool:
         """
-        Check if coordinates are valid for North America (our data coverage)
+        Check if coordinates are valid globally
         
         Args:
             lat: Latitude
             lon: Longitude
             
         Returns:
-            True if coordinates are within North America bounds
+            True if coordinates are valid global coordinates
         """
-        # North America bounds (roughly)
-        return (20.0 <= lat <= 70.0) and (-170.0 <= lon <= -50.0)
+        # Global bounds
+        return (-90.0 <= lat <= 90.0) and (-180.0 <= lon <= 180.0)
     
     def get_city_info(self, location_name: str) -> Optional[Dict]:
         """
@@ -169,7 +151,7 @@ class GeocodingService:
                     'longitude': coords['lon']
                 },
                 'is_valid_for_prediction': self.is_valid_coordinates(coords['lat'], coords['lon']),
-                'region': 'North America' if self.is_valid_coordinates(coords['lat'], coords['lon']) else 'Outside Coverage'
+                'region': 'Global' if self.is_valid_coordinates(coords['lat'], coords['lon']) else 'Invalid Coordinates'
             }
         
         return None
