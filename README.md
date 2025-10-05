@@ -1,10 +1,10 @@
-# StratoSense: Air Quality Prediction & Monitoring
+# NOVA: Air Quality Prediction & Monitoring
 
-StratoSense is a web application developed for the NASA Space Apps Challenge 2025, addressing the "From Earthdata to Action: Cloud Computing with Earth Observation Data for Predicting Cleaner, Safer Skies" challenge.
+NOVA is a web application developed for the NASA Space Apps Challenge 2025, addressing the "From Earthdata to Action: Cloud Computing with Earth Observation Data for Predicting Cleaner, Safer Skies" challenge.
 
 ## Project Overview
 
-StratoSense leverages NASA Earth observation data to predict and visualize air quality trends, helping users make informed decisions about outdoor activities and health precautions. The application combines satellite data with machine learning to provide accurate air quality forecasts and visualizations.
+NOVA leverages NASA Earth observation data to predict and visualize air quality trends, helping users make informed decisions about outdoor activities and health precautions. The application combines satellite data with machine learning to provide accurate air quality forecasts and visualizations.
 
 ### Key Features
 
@@ -37,8 +37,8 @@ StratoSense leverages NASA Earth observation data to predict and visualize air q
 
 1. Clone the repository:
    ```
-   git clone https://github.com/shknth/StratoSense.git
-   cd StratoSense
+   git clone https://github.com/shknth/NOVA.git
+   cd NOVA
    ```
 
 2. Set up the frontend:
@@ -69,7 +69,7 @@ StratoSense leverages NASA Earth observation data to predict and visualize air q
 ## Project Structure
 
 ```
-StratoSense/
+NOVA/
 ├── frontend/           # React frontend application
 │   ├── public/         # Static files
 │   └── src/            # React components and logic

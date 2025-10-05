@@ -34,7 +34,8 @@ const LandingPage = ({ onQuerySubmit }) => {
             <div></div> {/* Spacer for centering */}
             <ThemeToggle />
           </div>
-          <h1 className="landing-title">StratoSense</h1>
+          <h1 className="landing-title">NOVA</h1> 
+          <h1>NASA observation for verifeid airquality</h1>
           <p className="landing-subtitle">
             Ask me anything about air quality and health recommendations
           </p>

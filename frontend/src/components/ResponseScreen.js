@@ -31,7 +31,7 @@ const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) 
             <FontAwesomeIcon icon={faArrowLeft} />
             New Query
           </button>
-          <h1 className="response-title">StratoSense</h1>
+          <h1 className="response-title">NOVA</h1>
         </motion.div>
 
         <div className="chat-conversation">

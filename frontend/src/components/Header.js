@@ -6,7 +6,7 @@ const Header = () => {
   return (
     <header className="header">
       <div className="logo">
-        <h1>StratoSense</h1>
+        <h1>NOVA</h1>
         <p>Air Quality Prediction & Monitoring</p>
       </div>
       <div className="header-actions">

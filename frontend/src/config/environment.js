@@ -13,7 +13,7 @@ export const config = {
   openaiApiKey: process.env.REACT_APP_OPENAI_API_KEY,
   
   // App settings
-  appName: 'StratoSense',
+  appName: 'NOVA',
   version: process.env.REACT_APP_VERSION || '1.0.0',
   
   // Timeouts and limits

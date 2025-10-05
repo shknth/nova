@@ -1,5 +1,5 @@
 """
-Utility modules for the StratoSense application
+Utility modules for the NOVA application
 """
 
 from .input_agent import InputAgent
