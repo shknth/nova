@@ -1,7 +1,8 @@
 .query-dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  background: var(--bg-primary);
   padding: 2rem 0;
+  transition: background-color 0.3s ease;
 }
 
 .dashboard-container {
@@ -16,18 +17,18 @@
   gap: 1rem;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .back-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.5rem 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -36,21 +37,21 @@
 }
 
 .back-button:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #475569;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
 }
 
 .header-content h1 {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .query-text {
   font-style: italic;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 1rem;
   margin: 0;
   line-height: 1.5;
@@ -67,11 +68,12 @@
 .chart-card,
 .map-card,
 .recommendations-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .summary-card {
@@ -89,7 +91,7 @@
   margin: 0 0 1rem 0;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .summary-content {
@@ -103,7 +105,7 @@
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--bg-primary);
   border-radius: 12px;
   min-width: 120px;
 }
@@ -111,13 +113,13 @@
 .aqi-value {
   font-size: 3rem;
   font-weight: 800;
-  color: #1e3a8a;
+  color: var(--accent-primary);
   line-height: 1;
 }
 
 .aqi-label {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -139,13 +141,13 @@
 .recommendation .label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .health-risk .value,
 .recommendation .value {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .health-risk .value.moderate-risk {
@@ -217,19 +219,19 @@
   gap: 0.75rem;
   padding: 0.75rem;
   margin-bottom: 0.75rem;
-  background: #f8fafc;
+  background: var(--bg-primary);
   border-radius: 8px;
-  border-left: 3px solid #1e3a8a;
+  border-left: 3px solid var(--accent-primary);
   transition: all 0.2s ease;
 }
 
 .recommendation-item:hover {
-  background: #eff6ff;
+  background: var(--accent-secondary);
   transform: translateX(4px);
 }
 
 .recommendation-bullet {
-  color: #1e3a8a;
+  color: var(--accent-primary);
   font-weight: 700;
   font-size: 1.2rem;
   line-height: 1.5;
@@ -237,14 +239,14 @@
 }
 
 .recommendation-text {
-  color: #374151;
+  color: var(--text-primary);
   font-size: 0.95rem;
   line-height: 1.6;
   flex: 1;
 }
 
 .no-recommendations {
-  color: #64748b;
+  color: var(--text-secondary);
   font-style: italic;
   text-align: center;
   padding: 2rem;
