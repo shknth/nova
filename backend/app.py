@@ -233,10 +233,18 @@ def extract_parameters():
         
         # Generate response using Output Agent
         result = output_agent.analyze_predictions(predictions, extracted_params)
-        
+
+        # Add coordinates and location to metadata
+        if coords:
+            result['metadata']['coordinates'] = {'lat': lat, 'lon': lon}
+            result['metadata']['location'] = location_name
+        else:
+            result['metadata']['coordinates'] = {'lat': 40.7128, 'lon': -74.0060}
+            result['metadata']['location'] = location_name
+
         app.logger.info(f"Final response: {result}")
         app.logger.info("=== Request Processing Completed ===")
-        
+
         return jsonify(result), result['status_code']
         
     except Exception as e:

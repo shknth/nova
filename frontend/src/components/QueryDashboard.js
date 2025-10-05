@@ -122,6 +122,10 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
         pollutants['Wind Speed'] = { value: results.wind_speed.value, risk: results.wind_speed.status || 'Normal' };
       }
 
+      // Extract temperature and wind speed for display
+      const temperature = results.temperature ? results.temperature.value : null;
+      const windSpeed = results.wind_speed ? results.wind_speed.value : null;
+
       return {
         location: context.original_prompt ?
           (context.original_prompt.match(/in ([A-Za-z\s]+)/)?.[1] || 'Current Location') :
@@ -132,7 +136,9 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
         recommendations: analysis.recommendations || [],
         timeData,
         pollutants,
-        mapCenter: [39.8283, -98.5795] // Default, will be updated based on location
+        mapCenter: [39.8283, -98.5795], // Default, will be updated based on location
+        temperature,
+        windSpeed
       };
     }
 
@@ -260,6 +266,18 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
                     {data.healthRisk}
                   </span>
                 </div>
+                {data.temperature && (
+                  <div className="weather-info">
+                    <span className="label">Temperature</span>
+                    <span className="value">{Math.round(data.temperature)}°C</span>
+                  </div>
+                )}
+                {data.windSpeed && (
+                  <div className="weather-info">
+                    <span className="label">Wind Speed</span>
+                    <span className="value">{Math.round(data.windSpeed)} m/s</span>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

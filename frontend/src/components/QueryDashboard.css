@@ -179,6 +179,37 @@
   font-weight: 600;
 }
 
+.weather-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.weather-info:hover {
+  border-color: var(--accent-primary);
+  transform: translateX(2px);
+}
+
+.weather-info .label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.weather-info .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
 .chart-card canvas {
   max-height: 300px;
 }
