@@ -1,7 +1,7 @@
 // Environment Configuration
 export const config = {
   // API Configuration
-  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:8080/api',
   useMockData: process.env.REACT_APP_USE_MOCK_DATA === 'true' || process.env.NODE_ENV === 'development',
   
   // Development settings
