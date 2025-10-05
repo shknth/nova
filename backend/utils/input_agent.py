@@ -18,7 +18,7 @@ class InputAgent:
         genai.configure(api_key=api_key)
         
         # Initialize the model
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
         
         # System prompt for parameter extraction
         self.system_prompt = """Extract parameters from the input and respond with ONLY a JSON object (no markdown, no code blocks) in this format:
