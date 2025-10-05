@@ -187,7 +187,7 @@ def extract_parameters():
         
         # Extract location and datetime from parameters
         location_name = extracted_params.get('location', 'New York')  # Default location
-        datetime_str = extracted_params.get('datetime', '2025-09-01 14:00:00')  # Default time
+        datetime_str = extracted_params.get('datetime', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))  # Default time
         
         app.logger.info(f"Location: {location_name}, DateTime: {datetime_str}")
         
@@ -1009,5 +1009,5 @@ if __name__ == "__main__":
     # Start real-time monitoring
     realtime_data_source.start_monitoring(alert_system)
     
-    port = int(os.getenv('PORT', 8080))
+    port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
