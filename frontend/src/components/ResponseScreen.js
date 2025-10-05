@@ -2,16 +2,20 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faChartBar, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { useTheme } from '../contexts/ThemeContext';
 import ChatInput from './ChatInput';
 import './ResponseScreen.css';
 
 const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) => {
+  const { isDark } = useTheme();
+
   return (
     <motion.div 
       className="response-screen"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
+      data-theme={isDark ? 'dark' : 'light'}
     >
       <div className="response-container">
         <motion.div 
@@ -54,8 +58,8 @@ const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) 
             <div className="message-avatar ai-avatar">
               <FontAwesomeIcon icon={faRobot} />
             </div>
-            <div className="message-content">
-              <p>{aiResponse || 'No response available'}</p>
+            <div className="message-content ai-content">
+              <p className="ai-text">{aiResponse || 'No response available'}</p>
               
               <motion.div 
                 className="action-buttons"

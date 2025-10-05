@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faThermometerHalf, faWind, faTint, faLeaf, faSpinner, faSnowflake, faSun, faCloud } from '@fortawesome/free-solid-svg-icons';
-import { getWeatherMetrics } from '../services/apiService';
+
+import { faThermometerHalf, faWind, faTint, faLeaf } from '@fortawesome/free-solid-svg-icons';
+import { useTheme } from '../contexts/ThemeContext';
 import './BasicMetrics.css';
 
 const BasicMetrics = () => {
+  const { isDark } = useTheme();
+  
+  // Mock data - will be replaced with real API data
+  const metrics = {
+
+import { faThermometerHalf, faWind, faTint, faLeaf, faSpinner, faSnowflake, faSun, faCloud } from '@fortawesome/free-solid-svg-icons';
+import { getWeatherMetrics } from '../services/apiService';
+import './BasicMetrics.css';
+import { useTheme } from '../contexts/ThemeContext';
+
+
+const BasicMetrics = () => {
+  const { isDark } = useTheme();
   const [metrics, setMetrics] = useState({
+
     temperature: 22,
     aqi: 42,
     humidity: 65,
@@ -127,28 +142,14 @@ const BasicMetrics = () => {
   }
 
   return (
-    <div className="basic-metrics">
-      {error && (
-        <div className="error-indicator">
-          <small>⚠️ {error} - Showing cached data</small>
-        </div>
-      )}
-      
-      {/* Temperature Card */}
-      <div className={`metric-card temperature-card ${tempInfo.class}`}>
-        <div className="card-background">
-          {tempInfo.class === 'hot' && generateParticles(8, 'heat-wave')}
-          {tempInfo.class === 'freezing' && generateParticles(12, 'snowflake')}
-          {tempInfo.class === 'cold' && generateParticles(6, 'frost')}
-        </div>
+    <div className="basic-metrics" data-theme={isDark ? 'dark' : 'light'}>
+      <div className="metric-card">
         <div className="metric-icon">
           <FontAwesomeIcon icon={tempInfo.icon} />
         </div>
         <div className="metric-info">
-          <span className="metric-value" style={{ color: tempInfo.color }}>
-            {metrics.temperature}°C
-          </span>
-          <span className="metric-label">{tempInfo.status}</span>
+          <span className="metric-value themed-value">{metrics.temperature}°C</span>
+          <span className="metric-label themed-label">Temperature</span>
         </div>
       </div>
 
@@ -166,7 +167,7 @@ const BasicMetrics = () => {
           <span className="metric-value" style={{ color: aqiInfo.color }}>
             {metrics.aqi}
           </span>
-          <span className="metric-label">{aqiInfo.status}</span>
+          <span className="metric-label themed-label">{aqiInfo.status}</span>
         </div>
       </div>
 
@@ -180,8 +181,8 @@ const BasicMetrics = () => {
           <FontAwesomeIcon icon={faTint} />
         </div>
         <div className="metric-info">
-          <span className="metric-value">{metrics.humidity}%</span>
-          <span className="metric-label">{humidityInfo.status}</span>
+          <span className="metric-value themed-value">{metrics.humidity}%</span>
+          <span className="metric-label themed-label">Humidity</span>
         </div>
       </div>
 
@@ -199,8 +200,8 @@ const BasicMetrics = () => {
           <FontAwesomeIcon icon={faWind} />
         </div>
         <div className="metric-info">
-          <span className="metric-value">{metrics.windSpeed} km/h</span>
-          <span className="metric-label">{windInfo.status}</span>
+          <span className="metric-value themed-value">{metrics.windSpeed} km/h</span>
+          <span className="metric-label themed-label">Wind Speed</span>
         </div>
       </div>
     </div>

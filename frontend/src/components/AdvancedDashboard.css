@@ -118,20 +118,38 @@
 
 .metric-card h3,
 .metric-card h4 {
-  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 1.5rem;
   color: #374151;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .metric-card.large h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 1.1rem;
+  margin-bottom: 0;
+  padding: 1rem;
+}
+
+.metric-card.large {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
 }
 
 .large-metric {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  margin-right: 5rem;
+  gap: 1rem;
 }
 
 .large-metric .value {
@@ -142,15 +160,18 @@
 }
 
 .large-metric .label {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #10b981;
   font-weight: 600;
 }
+
+
 
 .metric-card .value {
   font-size: 1.2rem;
   font-weight: 700;
   color: #1e3a8a;
+  margin-left: 2rem;
 }
 
 .chart-container {
@@ -169,6 +190,14 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
+}
+
+.forecast-heading {
+  color: #000000 !important;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
 }
 
 .forecast-details {
@@ -213,6 +242,14 @@
   padding: 1.5rem;
 }
 
+.pollutant-heading {
+  color: #000000 !important;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+}
+
 .pollutant-item {
   display: grid;
   grid-template-columns: 80px 1fr 60px;
@@ -252,6 +289,14 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
+}
+
+.health-heading {
+  color: #000000 !important;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
 }
 
 .health-overview {
@@ -330,6 +375,14 @@
 /* Map Tab Styles */
 .map-container-advanced {
   width: 100%;
+}
+
+.map-heading {
+    color: #000000 !important;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.5px;
 }
 
 .map-container-advanced .leaflet-container {

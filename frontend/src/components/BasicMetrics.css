@@ -100,6 +100,27 @@
   color: inherit; /* Will be overridden by inline style */
 }
 
+
+/* Theme-specific text colors */
+/* Light theme styles */
+[data-theme="light"] .themed-value {
+  color: #1e3a8a !important;
+}
+
+[data-theme="light"] .themed-label {
+  color: #6B7280 !important;
+}
+
+/* Dark theme styles */
+[data-theme="dark"] .themed-value {
+  color: #3B82F6 !important;
+}
+
+[data-theme="dark"] .themed-label {
+  color: #3B82F6 !important;
+}
+
+
 /* ===== PARTICLE ANIMATIONS ===== */
 .particle {
   position: absolute;
@@ -590,6 +611,7 @@
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
+
 @media (max-width: 768px) {
   .basic-metrics {
     grid-template-columns: repeat(2, 1fr);
@@ -645,6 +667,9 @@
   .metric-label {
     font-size: 0.8rem;
   }
+
+}
+
   
   /* Further reduce particles on small screens */
   .particle:nth-child(n+4) {
@@ -679,3 +704,4 @@
     opacity: 0.8 !important;
   }
 }
+
