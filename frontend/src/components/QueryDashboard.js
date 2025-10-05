@@ -3,21 +3,23 @@ import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faChartBar } from '@fortawesome/free-solid-svg-icons';
 import { Line, Bar } from 'react-chartjs-2';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
   BarElement,
-  Title, 
-  Tooltip, 
-  Legend 
+  Title,
+  Tooltip,
+  Legend
 } from 'chart.js';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './QueryDashboard.css';
 import L from 'leaflet';
+import DynamicVisualization from './DynamicVisualization';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Register ChartJS components
 ChartJS.register(
@@ -40,6 +42,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => {
+  const { isDark } = useTheme();
+
   // Extract time from user query (e.g., "2:00pm", "14:00", "2pm")
   const extractTimeFromQuery = (query) => {
     if (!query) return null;
@@ -97,18 +101,60 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
 
     // Use API data if available
     if (apiData && apiData.metadata && apiData.metadata.analysis) {
+      console.log('🗺️ Full API Data:', apiData);
+
       const analysis = apiData.metadata.analysis;
       const results = analysis.results || {};
       const context = apiData.metadata.context || {};
+      const dashboardDetails = apiData.dashboard_details || {};
 
       const aqiData = results.aqi || {};
-      const currentAQI = aqiData.value || 42;
+      const currentAQI = aqiData.value || dashboardDetails.aqi || 42;
+
+      // Extract coordinates from first map visualization
+      let mapCenter = [39.8283, -98.5795]; // Default
+      let location = dashboardDetails.location || 'Current Location';
+
+      if (dashboardDetails.visualizations && dashboardDetails.visualizations.length > 0) {
+        console.log('📊 Visualizations:', dashboardDetails.visualizations);
+        // Find first map visualization with coordinates
+        const mapViz = dashboardDetails.visualizations.find(viz => viz.type === 'map' && viz.data && viz.data.lat && viz.data.lon);
+        if (mapViz) {
+          mapCenter = [mapViz.data.lat, mapViz.data.lon];
+          console.log('📍 Map coordinates from visualization:', mapCenter);
+        }
+      }
 
       // Extract time from query
       const extractedTime = extractTimeFromQuery(userQuery);
 
-      // Generate forecast data
-      const timeData = generateHourlyForecast(currentAQI, extractedTime);
+      // Check for time series visualization data
+      let timeData = [];
+      let timeSeriesViz = null;
+
+      if (dashboardDetails.visualizations && dashboardDetails.visualizations.length > 0) {
+        timeSeriesViz = dashboardDetails.visualizations.find(viz => viz.type === 'line');
+
+        if (timeSeriesViz && timeSeriesViz.data && timeSeriesViz.data.timestamp && timeSeriesViz.data.value) {
+          // Extract the single point from time series
+          const timestamp = timeSeriesViz.data.timestamp;
+          const value = timeSeriesViz.data.value;
+
+          console.log('📈 Time series data found:', { timestamp, value });
+
+          // Parse the timestamp to get hour
+          const targetHour = new Date(timestamp).getHours();
+
+          // Generate ±3 hours around this point
+          timeData = generateHourlyForecast(value, `${targetHour.toString().padStart(2, '0')}:00`);
+        } else {
+          // Fallback to generating from current AQI
+          timeData = generateHourlyForecast(currentAQI, extractedTime);
+        }
+      } else {
+        // Fallback to generating from current AQI
+        timeData = generateHourlyForecast(currentAQI, extractedTime);
+      }
 
       // Build pollutants object from API data
       const pollutants = {};
@@ -126,19 +172,39 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
       const temperature = results.temperature ? results.temperature.value : null;
       const windSpeed = results.wind_speed ? results.wind_speed.value : null;
 
+      // Filter out time series from visualizations to avoid duplicate
+      // Also remove duplicate visualizations (same type and title)
+      let filteredVisualizations = [];
+      if (dashboardDetails.visualizations) {
+        const seen = new Set();
+        filteredVisualizations = dashboardDetails.visualizations.filter(viz => {
+          // Skip line charts (already handled in Hourly Forecast)
+          if (viz.type === 'line') return false;
+
+          // Create unique key from type and title
+          const key = `${viz.type}-${viz.title}`;
+
+          // If we've seen this combination before, skip it
+          if (seen.has(key)) return false;
+
+          // Otherwise, mark as seen and include it
+          seen.add(key);
+          return true;
+        });
+      }
+
       return {
-        location: context.original_prompt ?
-          (context.original_prompt.match(/in ([A-Za-z\s]+)/)?.[1] || 'Current Location') :
-          'Current Location',
+        location,
         currentAQI: Math.round(currentAQI),
         healthRisk: aqiData.status || 'Unknown',
         recommendation: analysis.recommendations?.[0] || 'No specific recommendations',
         recommendations: analysis.recommendations || [],
         timeData,
         pollutants,
-        mapCenter: [39.8283, -98.5795], // Default, will be updated based on location
+        mapCenter,
         temperature,
-        windSpeed
+        windSpeed,
+        visualizations: filteredVisualizations
       };
     }
 
@@ -179,10 +245,11 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
     datasets: [{
       label: 'AQI Forecast',
       data: data.timeData.map(d => d.aqi),
-      borderColor: '#1e3a8a',
-      backgroundColor: 'rgba(30, 58, 138, 0.1)',
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
       fill: true,
-      tension: 0.4
+      tension: 0.4,
+      borderWidth: 3
     }]
   };
 
@@ -213,11 +280,28 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          color: '#ffffff'
+        }
       }
     },
     scales: {
+      x: {
+        ticks: {
+          color: '#ffffff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      },
       y: {
-        beginAtZero: true
+        beginAtZero: true,
+        ticks: {
+          color: '#ffffff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
       }
     }
   };
@@ -366,9 +450,22 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
               </Marker>
             </MapContainer>
           </motion.div>
+
+          {/* Dynamic Visualizations from API */}
+          {data.visualizations && data.visualizations.length > 0 && data.visualizations.map((viz, index) => (
+            <motion.div
+              key={`viz-${index}`}
+              className="chart-card"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.9 + (index * 0.1), duration: 0.5 }}
+            >
+              <DynamicVisualization visualization={viz} index={index} isDark={isDark} />
+            </motion.div>
+          ))}
         </div>
 
-        <motion.div 
+        <motion.div
           className="advanced-button-container"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

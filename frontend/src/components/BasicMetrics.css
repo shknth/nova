@@ -301,7 +301,7 @@
 .particle.wind-particle {
   width: 15px;
   height: 2px;
-  background: linear-gradient(to right, transparent, #64748b, transparent);
+  background: linear-gradient(to right, transparent, #475569, transparent);
   animation: windFlow 2.5s linear infinite;
   border-radius: 1px;
   top: 30% !important; /* Position in middle area of card */
@@ -332,7 +332,7 @@
 
 .wind-line {
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(100, 116, 139, 0.4), transparent);
+  background: linear-gradient(to right, transparent, rgba(71, 85, 105, 0.6), transparent);
   margin: 6px 0;
   animation: windLine 3.5s ease-in-out infinite;
 }

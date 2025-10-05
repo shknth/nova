@@ -1,13 +1,76 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faChartBar, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChartBar, faRobot, faVolumeUp, faStop } from '@fortawesome/free-solid-svg-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import ChatInput from './ChatInput';
 import './ResponseScreen.css';
 
 const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) => {
   const { isDark } = useTheme();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const synthRef = useRef(window.speechSynthesis);
+
+  // Cleanup speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (synthRef.current) {
+        synthRef.current.cancel();
+      }
+    };
+  }, []);
+
+  const handleTextToSpeech = () => {
+    const synth = synthRef.current;
+
+    if (isSpeaking) {
+      // Stop speaking
+      synth.cancel();
+      setIsSpeaking(false);
+    } else {
+      // Start speaking
+      if (!aiResponse) return;
+
+      const utterance = new SpeechSynthesisUtterance(aiResponse);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      // Try to find British or Irish voice
+      const voices = synth.getVoices();
+      console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+
+      // Prioritize British English (en-GB) or Irish English (en-IE)
+      const preferredVoice = voices.find(voice =>
+        voice.lang === 'en-GB' || voice.lang === 'en-IE' ||
+        voice.name.includes('British') || voice.name.includes('Irish') ||
+        voice.name.includes('UK') || voice.name.includes('Daniel') ||
+        voice.name.includes('Kate') || voice.name.includes('Serena')
+      );
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        console.log('Using voice:', preferredVoice.name);
+      } else {
+        console.log('No British/Irish voice found, using default');
+      }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event);
+        setIsSpeaking(false);
+      };
+
+      synth.speak(utterance);
+    }
+  };
 
   return (
     <motion.div 
@@ -59,15 +122,24 @@ const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) 
               <FontAwesomeIcon icon={faRobot} />
             </div>
             <div className="message-content ai-content">
-              <p className="ai-text">{aiResponse || 'No response available'}</p>
-              
-              <motion.div 
+              <div className="ai-text-header">
+                <p className="ai-text">{aiResponse || 'No response available'}</p>
+                <button
+                  className={`speaker-button ${isSpeaking ? 'speaking' : ''}`}
+                  onClick={handleTextToSpeech}
+                  title={isSpeaking ? 'Stop speaking' : 'Read aloud'}
+                >
+                  <FontAwesomeIcon icon={isSpeaking ? faStop : faVolumeUp} />
+                </button>
+              </div>
+
+              <motion.div
                 className="action-buttons"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.5 }}
               >
-                <button 
+                <button
                   className="dashboard-button primary"
                   onClick={onViewDashboard}
                 >

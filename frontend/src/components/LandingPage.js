@@ -35,7 +35,7 @@ const LandingPage = ({ onQuerySubmit }) => {
             <ThemeToggle />
           </div>
           <h1 className="landing-title">NOVA</h1> 
-          <h1>NASA observation for verifeid airquality</h1>
+          {/* <h1>NASA Observation for Verified AirQuality</h1> */}
           <p className="landing-subtitle">
             Ask me anything about air quality and health recommendations
           </p>
