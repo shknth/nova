@@ -1,6 +1,7 @@
 import requests
 from typing import Dict, Optional, Tuple
 import time
+from .location_cache import MAJOR_CITIES_CACHE, get_cached_coordinates
 
 class GeocodingService:
     def __init__(self):
@@ -10,8 +11,8 @@ class GeocodingService:
             'User-Agent': 'NASA-SpaceApps-AirQuality/1.0'
         }
         
-        # Cache for frequently requested locations (empty initially, populated dynamically)
-        self.location_cache = {}
+        # Initialize with static cache and runtime cache
+        self.location_cache = dict(MAJOR_CITIES_CACHE)  # Start with major cities
     
     def geocode(self, location_name: str) -> Optional[Dict[str, float]]:
         """
@@ -29,12 +30,19 @@ class GeocodingService:
         # Normalize location name
         normalized_name = location_name.lower().strip()
         
-        # Check cache first
+        # First check the static cache using smart matching
+        cached_result = get_cached_coordinates(normalized_name)
+        if cached_result:
+            display_name = location_name  # Use original name for display
+            cached_result['display_name'] = display_name
+            return cached_result
+        
+        # Then check runtime cache
         if normalized_name in self.location_cache:
             return self.location_cache[normalized_name]
         
         try:
-            # Make API request to Nominatim (global search)
+            # If not in any cache, make API request to Nominatim (global search)
             params = {
                 'q': location_name,
                 'format': 'json',
