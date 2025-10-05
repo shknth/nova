@@ -162,6 +162,16 @@ class ApiService {
       throw new Error('Failed to fetch weather metrics');
     }
   }
+
+  // Extract Parameters API - main query endpoint
+  async extractParameters(prompt) {
+    try {
+      const response = await apiClient.post('/extract-parameters', { prompt });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to extract parameters from query');
+    }
+  }
 }
 
 // Export singleton instance
@@ -179,7 +189,8 @@ export const {
   getRegionalData,
   getPredictions,
   getModelInfo,
-  getWeatherMetrics
+  getWeatherMetrics,
+  extractParameters
 } = apiService;
 
 export default apiService;

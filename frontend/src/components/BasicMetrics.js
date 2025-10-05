@@ -65,8 +65,8 @@ const BasicMetrics = () => {
   };
 
   const getHumidityStatus = (humidity) => {
-    if (humidity <= 30) return { status: 'Dry', class: 'dry' };
-    if (humidity <= 60) return { status: 'Comfortable', class: 'comfortable' };
+    if (humidity <= 25) return { status: 'Dry', class: 'dry' };
+    if (humidity <= 35) return { status: 'Comfortable', class: 'comfortable' };
     return { status: 'Humid', class: 'humid' };
   };
 
