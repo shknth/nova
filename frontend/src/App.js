@@ -6,33 +6,13 @@ import LandingPage from './components/LandingPage';
 import ResponseScreen from './components/ResponseScreen';
 import QueryDashboard from './components/QueryDashboard';
 import AdvancedDashboard from './components/AdvancedDashboard';
+import { extractParameters } from './services/apiService';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('landing');
   const [userQuery, setUserQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  // Mock AI response generator - will be replaced with actual API call
-  const generateAIResponse = (query) => {
-    // Ensure query is a string
-    if (!query || typeof query !== 'string') {
-      return "I'm sorry, I didn't receive a valid question. Please try asking again.";
-    }
-
-    const responses = {
-      asthma: "Based on current air quality conditions, the PM2.5 and ozone levels are moderately elevated in your area. For individuals with asthma, I recommend avoiding outdoor activities during peak pollution hours (2-4 PM). Consider indoor activities or wait until evening when air quality typically improves.",
-      jogging: "The current air quality is good for outdoor exercise. PM2.5 levels are within safe ranges, and ozone concentrations are low. This is an excellent time for jogging or other outdoor activities.",
-      children: "Air quality conditions are currently suitable for children's outdoor play. However, I recommend monitoring sensitive individuals and limiting strenuous activities if they show any respiratory discomfort.",
-      default: "Based on current air quality data, conditions are generally acceptable for most outdoor activities. However, sensitive individuals should monitor their symptoms and consider limiting prolonged outdoor exposure during peak pollution hours."
-    };
-
-    const lowerQuery = query.toLowerCase();
-    if (lowerQuery.includes('asthma')) return responses.asthma;
-    if (lowerQuery.includes('jog') || lowerQuery.includes('run')) return responses.jogging;
-    if (lowerQuery.includes('child') || lowerQuery.includes('kid') || lowerQuery.includes('son') || lowerQuery.includes('daughter')) return responses.children;
-    return responses.default;
-  };
 
   const handleQuerySubmit = async (query) => {
     // Validate query input
@@ -43,14 +23,23 @@ function App() {
 
     setIsLoading(true);
     setUserQuery(query.trim());
-    
-    // Simulate API call delay
-    setTimeout(() => {
-      const response = generateAIResponse(query.trim());
-      setAiResponse(response);
+
+    try {
+      // Call the actual API endpoint
+      const response = await extractParameters(query.trim());
+
+      // Extract display_text from the response
+      const displayText = response.display_text || "I couldn't process your query. Please try again.";
+
+      setAiResponse(displayText);
       setCurrentScreen('response');
+    } catch (error) {
+      console.error('Error submitting query:', error);
+      setAiResponse("I'm sorry, I encountered an error processing your request. Please try again.");
+      setCurrentScreen('response');
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleViewDashboard = () => {

@@ -1,0 +1,99 @@
+location,bc,ground_co,no,ground_no2,nox,ground_o3,ground_pm10,ground_pm25,so2,location_id
+ARNOLD,,,,,,0.042,13.0,8.7,,0
+Alamo Lake,,,,,,0.051,31.0,4.1,0.001,1
+Arendtsville,,,,,,0.059,,,,2
+Atascocita C560,,,,,,0.051,,,,3
+BONTERRE,,,,,,0.042,,,,4
+Barstow,,,,,,0.048,5.0,,,5
+Baytown Garth C1017,,,,,,0.053,,,-0.0001,6
+Baytown Wetlands Center C552,,,,,,0.044,,,,7
+Buick NE,,,,,,,,,0.001,8
+Bunker Hill Village C562,,,,,,0.046,,,,9
+CARTHAGE,,,,,,,41.0,,,10
+CHARLSTN,,,,,,,,,0.001,11
+Caddo Valley,,,,,,0.034,,,,12
+Channelview C15/AH115,,,,0.0097,,0.047,,,,13
+Clinton C403/C304/AH113,,0.1,,0.0052,,0.049,,,-0.0001,14
+Columbus - Rocky For,,,,,,,,13.6,,15
+Conroe Relocated C78/A321,,,,0.002,,0.062,,,,16
+Crosby Library C553,,,,,,0.06,,,,17
+Danciger C618,,,,0.0005,,0.046,,,,18
+Davidsonville,,,,,,0.035,,,,19
+ELDOSPGS,,,,,,0.047,,10.8,,20
+Elkhart-Prairie St.,0.41,,,,,,,13.1,,21
+Enterprise - US Fore,,,,,,,,4.0,,22
+Farrar,,,,,,0.044,,,,23
+Fellows Lake,,,,,,0.047,,,,24
+Felton Cal-Fire,,,,,,,,6.0,,25
+Fishers,,,,,,,,9.3,,26
+Fort Wayne-Beacon St,,,,,,0.019,,5.6,,27
+Freeport South Avenue I C1012,,,,,,,,,0.0001,28
+Galveston 99th St. C1034/A320/X183,,,,0.0017,,0.062,,,,29
+Gary-IITRI,0.18,,,0.0077,,0.042,25.0,23.6,0.0003,30
+HRM,,,,0.009,,0.048,,,,31
+Hillcrest HS,,,,,,0.046,31.0,7.2,,32
+Houston Aldine C8,,,,-0.0006,,0.043,,12.0,,33
+Houston Bayland Park,,,,0.0008,,0.046,,10.5,,34
+Houston Croquet C409,,,,,,0.043,,,-0.0001,35
+Houston Deer Park C3,,0.1,,0.002,,0.041,19.0,8.0,0.0001,36
+Houston East C1/G316,,,,0.0039,,0.06,,,,37
+Houston Monroe C406,,,,,,0.037,,,-0.0004,38
+Houston North Loop C,,0.3,,0.0031,,,,18.3,,39
+Houston North Wayside C405,,,,,,0.044,,,0.0001,40
+Houston Park Place C,,,,0.0029,,0.04,,3.9,-0.0002,41
+Houston Southwest Freeway C1066,,,,-0.0019,,,,,,42
+Houston Texas Avenue C411,,,,0.0035,,0.044,,,,43
+Houston Westhollow C,,,,,,0.045,,12.0,,44
+Huffman Wolf Road C563,,,,,,0.059,,,,45
+Indpls-Washington Pa,,0.0,,0.0099,,0.038,29.0,9.6,0.0003,46
+Katy Park C559,,,,,,0.038,,,,47
+Kokomo - E. Vaile Av,,,,,,0.054,,7.9,,48
+Lafayette-Greenbush,,,,,,,,8.9,,49
+Lake Jackson C1016,,,,-0.0004,,0.052,,,,50
+Lang C408,,,,0.0047,,0.042,,,,51
+Larwill,,,,0.01,,,,12.6,0.0,52
+Liberty,,,,,,0.041,,8.3,,53
+Lucerne Valley,,,,,,0.059,11.0,,,54
+Lynchburg Ferry C1015/A165,,,,0.0038,,0.053,,,,55
+MMFRA1001,,,,,,,,3.0,,56
+MRGRETTA,,,,0.008,,,10.0,,0.001,57
+Manvel Croix Park C84,,,,-0.0026,,0.054,,,,58
+Mark Twain SP,,,0.0,0.0009,0.001,0.042,60.0,,0.0009,59
+Maryland Heights,,,,,,0.046,,,,60
+Meyer Park C561,,,,,,0.046,,,,61
+NWBLMFLD,,,,,,0.046,,,,62
+New Albany,,,,,,0.009,,6.0,0.0009,63
+Northwest Harris Co. C26/A110/X154,,,,0.002,,0.046,,,,64
+Ogden Dunes,,,,,,0.049,,14.1,,65
+Orchard Farm,,,,,,0.044,,,,66
+Oxford,,,,,,0.069,,,,67
+Pacific,,,,,,0.045,,,,68
+Potawatomi,,,,0.0,,0.048,,11.0,0.0001,69
+ROLAND,,,0.001,0.0077,0.009,0.033,0.0,7.0,,70
+Rocky Creek,,,,,,0.048,,,,71
+San Ysidro,,,,,,,,16.5,,72
+Savannah,,,,,,0.047,,,,73
+Seabrook Friendship,,,,,,0.037,,12.1,,74
+Sheldon C551,,,,,,0.055,,,,75
+South Bend-Shields D,,,,0.0055,,0.042,,15.0,,76
+Spokane Valley-E Bro,,,,,,,9.0,0.0,,77
+St. Joseph,,,,,,,40.0,9.0,,78
+Terre Haute-Lafayett,,,,,,0.045,,10.2,0.0013,79
+Texas City 34th St. C620,,,,0.0021,,0.057,,,,80
+Texas City Ball Park A147/C1022,,,,,,,,,0.0013,81
+Tom Bass C558,,,,,,0.047,,,,82
+Tooele,,,,,,,,0.2,,83
+Trimble,,,,,,0.049,,,,84
+Trona - Athol and Te,,,,,,0.044,4.0,,,85
+Troost,,,0.0003,0.0081,0.0084,,32.0,8.9,0.0019,86
+Twin Falls PM25,,,,,,,,12.0,,87
+U of H,,,,,,0.045,,,,88
+UH Coastal Center C697,,0.2,,,,0.049,,,,89
+UH Moody Tower C695,,0.2,,,,0.049,,,,90
+UH WG Jones Forest C698,,0.2,,,,0.057,,,,91
+Unionville,,,,,,0.047,,,,92
+WEST ALTON,,,,,,0.044,,,,93
+Wallisville Road C617,,,,0.0025,,0.057,,,,94
+Waterbury,,,,,,,17.0,7.7,,95
+Watkins Mill State P,,,,,,0.047,,,,96
+West Houston C554,,,,,,0.046,,,,97
