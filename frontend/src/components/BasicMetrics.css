@@ -675,7 +675,6 @@
   .particle:nth-child(n+4) {
     display: none;
   }
-}
 
 /* ===== ACCESSIBILITY & PERFORMANCE ===== */
 @media (prefers-reduced-motion: reduce) {

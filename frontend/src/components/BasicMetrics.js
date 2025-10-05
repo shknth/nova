@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-import { faThermometerHalf, faWind, faTint, faLeaf } from '@fortawesome/free-solid-svg-icons';
-import { useTheme } from '../contexts/ThemeContext';
-import './BasicMetrics.css';
-
-const BasicMetrics = () => {
-  const { isDark } = useTheme();
-  
-  // Mock data - will be replaced with real API data
-  const metrics = {
+import { getWeatherMetrics } from '../services/apiService';
 
 import { faThermometerHalf, faWind, faTint, faLeaf, faSpinner, faSnowflake, faSun, faCloud } from '@fortawesome/free-solid-svg-icons';
-import { getWeatherMetrics } from '../services/apiService';
-import './BasicMetrics.css';
 import { useTheme } from '../contexts/ThemeContext';
+import './BasicMetrics.css';
+
 
 
 const BasicMetrics = () => {
