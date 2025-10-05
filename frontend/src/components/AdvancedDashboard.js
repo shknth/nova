@@ -39,27 +39,66 @@ ChartJS.register(
   Legend
 );
 
-const AdvancedDashboard = ({ onBack }) => {
+const AdvancedDashboard = ({ apiData, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Comprehensive mock data
+  // Extract data from API using useMemo to recalculate when apiData changes
+  const { currentAQI, currentLocation, mapCenter } = React.useMemo(() => {
+    let center = [53.0, -7.5]; // Default center (Ireland)
+    let aqi = apiData.dashboard_details.aqi; // Default AQI
+    let location = 'Unknown';
+
+    console.log('🔍 Advanced Dashboard API Data:', apiData);
+
+    if (apiData) {
+      // Try to extract AQI from multiple sources
+      if (apiData.dashboard_details && apiData.dashboard_details.aqi) {
+        aqi = Math.round(apiData.dashboard_details.aqi);
+        console.log('📊 AQI fromadvanced dashboard_details:', apiData.dashboard_details.aqi, '→ rounded:', aqi);
+      } else if (apiData.metadata && apiData.metadata.analysis && apiData.metadata.analysis.results && apiData.metadata.analysis.results.aqi) {
+        aqi = Math.round(apiData.metadata.analysis.results.aqi.value);
+        console.log('📊 AQI from metadata.analysis:', aqi);
+      }
+
+      // Extract location
+      if (apiData.dashboard_details && apiData.dashboard_details.location) {
+        location = apiData.dashboard_details.location;
+      } else if (apiData.metadata && apiData.metadata.context && apiData.metadata.context.original_prompt) {
+        // Try to extract location from prompt
+        const locationMatch = apiData.metadata.context.original_prompt.match(/in ([A-Za-z\s]+)/);
+        location = locationMatch ? locationMatch[1] : 'Unknown';
+      }
+
+      // Extract coordinates
+      if (apiData.dashboard_details && apiData.dashboard_details.visualizations) {
+        const mapViz = apiData.dashboard_details.visualizations.find(viz => viz.type === 'map' && viz.data && viz.data.lat && viz.data.lon);
+        if (mapViz) {
+          center = [mapViz.data.lat, mapViz.data.lon];
+          console.log('📍 Coordinates from visualization:', center);
+        }
+      }
+    }
+
+    console.log('✅ Final AQI:', aqi, 'Location:', location);
+
+    return { currentAQI: aqi, currentLocation: location, mapCenter: center };
+  }, [apiData]);
+
+  // Use real data from API, with fallback to mock data
   const data = {
     locations: [
-      { id: 1, lat: 53.3498, lng: -6.2603, aqi: 42, location: 'Dublin', pm25: 12.5, pm10: 18.2, o3: 35.8, no2: 15.3 },
-      { id: 2, lat: 53.2707, lng: -9.0568, aqi: 38, location: 'Galway', pm25: 10.1, pm10: 15.8, o3: 32.1, no2: 12.8 },
-      { id: 3, lat: 52.6680, lng: -8.6305, aqi: 55, location: 'Limerick', pm25: 15.2, pm10: 22.1, o3: 42.3, no2: 18.7 },
-      { id: 4, lat: 51.8985, lng: -8.4756, aqi: 48, location: 'Cork', pm25: 13.8, pm10: 19.5, o3: 38.9, no2: 16.2 }
+      { id: 1, lat: mapCenter[0], lng: mapCenter[1], aqi: currentAQI, location: currentLocation, pm25: 12.5, pm10: 18.2, o3: 35.8, no2: 15.3 }
     ],
     hourlyForecast: Array.from({ length: 24 }, (_, i) => ({
       hour: `${i.toString().padStart(2, '0')}:00`,
-      aqi: 35 + Math.sin(i * 0.3) * 15 + Math.random() * 10,
+      aqi: currentAQI + Math.sin(i * 0.3) * 10 + Math.random() * 8 - 4,
       pm25: 8 + Math.sin(i * 0.2) * 5 + Math.random() * 3,
       temperature: 18 + Math.sin(i * 0.26) * 8,
       humidity: 60 + Math.sin(i * 0.15) * 20
     })),
     weeklyForecast: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => ({
       day,
-      aqi: 40 + Math.sin(i * 0.5) * 12,
+      aqi: currentAQI + Math.sin(i * 0.5) * 10 + (Math.random() * 6 - 3),
       pm25: 10 + Math.sin(i * 0.3) * 4,
       temperature: 20 + Math.sin(i * 0.4) * 6
     })),
@@ -114,7 +153,7 @@ const AdvancedDashboard = ({ onBack }) => {
           <div className="metric-card large">
             <h3>Current Air Quality Index</h3>
             <div className="large-metric">
-              <span className="value">42</span>
+              <span className="value">{currentAQI}</span>
               <span className="label">Good</span>
             </div>
           </div>
@@ -134,17 +173,40 @@ const AdvancedDashboard = ({ onBack }) => {
         <div className="chart-container">
           <h3>12-Hour Trend</h3>
           <div style={{ height: '300px' }}>
-            <Line 
+            <Line
               key="overview-chart"
-              data={overviewChartData} 
+              data={overviewChartData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    labels: {
+                      color: '#ffffff'
+                    }
+                  }
+                },
                 scales: {
-                  y: { type: 'linear', display: true, position: 'left' },
-                  y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+                  x: {
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                  },
+                  y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                  },
+                  y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    ticks: { color: '#ffffff' },
+                    grid: { drawOnChartArea: false, color: 'rgba(255, 255, 255, 0.1)' }
+                  }
                 }
-              }} 
+              }}
             />
           </div>
         </div>
@@ -170,7 +232,27 @@ const AdvancedDashboard = ({ onBack }) => {
           <div className="chart-container">
             <h3>7-Day AQI Forecast</h3>
             <div style={{ height: '300px' }}>
-              <Bar key="weekly-forecast" data={weeklyChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+              <Bar key="weekly-forecast" data={weeklyChartData} options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    labels: {
+                      color: '#ffffff'
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                  },
+                  y: {
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                  }
+                }
+              }} />
             </div>
           </div>
           <div className="forecast-details">
@@ -266,9 +348,9 @@ const AdvancedDashboard = ({ onBack }) => {
     <div className="tab-content">
       <div className="map-container-advanced">
         <h3 className="map-heading">Regional Air Quality</h3>
-        <MapContainer 
-        center={[53.0, -7.5]} 
-        zoom={7}
+        <MapContainer
+        center={mapCenter}
+        zoom={10}
         style={{ height: '500px', width: '100%' }}
         maxBounds={[[-90, -180], [90, 180]]} 
         minZoom={2} 

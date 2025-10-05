@@ -156,7 +156,7 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
         timeData = generateHourlyForecast(currentAQI, extractedTime);
       }
 
-      // Build pollutants object from API data
+      // Build pollutants object from API data (only actual pollutants, not weather data)
       const pollutants = {};
       if (results.pm25) {
         pollutants['PM2.5'] = { value: results.pm25.value, risk: results.pm25.status };
@@ -164,8 +164,17 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
       if (results.o3) {
         pollutants['O3'] = { value: results.o3.value, risk: results.o3.status };
       }
-      if (results.wind_speed) {
-        pollutants['Wind Speed'] = { value: results.wind_speed.value, risk: results.wind_speed.status || 'Normal' };
+      if (results.no2) {
+        pollutants['NO2'] = { value: results.no2.value, risk: results.no2.status };
+      }
+      if (results.ch2o) {
+        pollutants['CH2O'] = { value: results.ch2o.value, risk: results.ch2o.status };
+      }
+      if (results.co) {
+        pollutants['CO'] = { value: results.co.value, risk: results.co.status };
+      }
+      if (results.aod) {
+        pollutants['AOD'] = { value: results.aod.value, risk: results.aod.status };
       }
 
       // Extract temperature and wind speed for display
@@ -180,6 +189,9 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
         filteredVisualizations = dashboardDetails.visualizations.filter(viz => {
           // Skip line charts (already handled in Hourly Forecast)
           if (viz.type === 'line') return false;
+
+          // Skip "Pollutant Comparison" as it duplicates Key Pollutants chart
+          if (viz.title && viz.title.toLowerCase().includes('pollutant comparison')) return false;
 
           // Create unique key from type and title
           const key = `${viz.type}-${viz.title}`;

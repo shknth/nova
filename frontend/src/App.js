@@ -118,6 +118,7 @@ function App() {
       case 'advanced-dashboard':
         return (
           <AdvancedDashboard
+            apiData={apiData}
             onBack={handleBack}
           />
         );

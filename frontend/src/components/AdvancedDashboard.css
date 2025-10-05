@@ -194,7 +194,7 @@
 }
 
 .forecast-heading {
-  color: #000000 !important;
+  color: var(--text-primary) !important;
   font-size: 1.5rem;
   font-weight: 500;
   margin-bottom: 1.5rem;
@@ -244,7 +244,7 @@
 }
 
 .pollutant-heading {
-  color: #000000 !important;
+  color: var(--text-primary) !important;
   font-size: 1.5rem;
   font-weight: 500;
   margin-bottom: 1.5rem;
@@ -293,7 +293,7 @@
 }
 
 .health-heading {
-  color: #000000 !important;
+  color: var(--text-primary) !important;
   font-size: 1.5rem;
   font-weight: 500;
   margin-bottom: 1.5rem;
@@ -379,7 +379,7 @@
 }
 
 .map-heading {
-    color: #000000 !important;
+    color: var(--text-primary) !important;
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
