@@ -39,24 +39,122 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
-  // Mock data based on query - in real app, this would come from backend
+const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => {
+  // Extract time from user query (e.g., "2:00pm", "14:00", "2pm")
+  const extractTimeFromQuery = (query) => {
+    if (!query) return null;
+
+    const timePatterns = [
+      /(\d{1,2}):(\d{2})\s*(am|pm)/i,  // "2:00pm"
+      /(\d{1,2})\s*(am|pm)/i,           // "2pm"
+      /(\d{1,2}):(\d{2})/,               // "14:00"
+    ];
+
+    for (const pattern of timePatterns) {
+      const match = query.match(pattern);
+      if (match) {
+        let hour = parseInt(match[1]);
+        const minute = match[2] ? parseInt(match[2]) : 0;
+        const meridiem = match[3] || match[2];
+
+        if (meridiem && meridiem.toLowerCase() === 'pm' && hour !== 12) {
+          hour += 12;
+        } else if (meridiem && meridiem.toLowerCase() === 'am' && hour === 12) {
+          hour = 0;
+        }
+
+        return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      }
+    }
+    return null;
+  };
+
+  // Generate hourly forecast around the extracted time
+  const generateHourlyForecast = (baseAQI, targetTime) => {
+    const baseHour = targetTime ? parseInt(targetTime.split(':')[0]) : 14;
+    const forecast = [];
+
+    // Generate 7 hours of data (3 before, target hour, 3 after)
+    for (let i = -3; i <= 3; i++) {
+      const hour = (baseHour + i + 24) % 24;
+      const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+
+      // Add some variance (±3) but make target time exact
+      let aqiValue = baseAQI;
+      if (i !== 0) {
+        const variance = (Math.random() * 6) - 3; // Random value between -3 and +3
+        aqiValue = Math.round(baseAQI + variance);
+      }
+
+      forecast.push({ time: timeStr, aqi: aqiValue });
+    }
+
+    return forecast;
+  };
+
   const generateQuerySpecificData = () => {
-    // Ensure userQuery is a string and handle null/undefined cases
     const queryString = userQuery && typeof userQuery === 'string' ? userQuery.toLowerCase() : '';
-    
-    // Extract location from query if possible
+
+    // Use API data if available
+    if (apiData && apiData.metadata && apiData.metadata.analysis) {
+      const analysis = apiData.metadata.analysis;
+      const results = analysis.results || {};
+      const context = apiData.metadata.context || {};
+
+      const aqiData = results.aqi || {};
+      const currentAQI = aqiData.value || 42;
+
+      // Extract time from query
+      const extractedTime = extractTimeFromQuery(userQuery);
+
+      // Generate forecast data
+      const timeData = generateHourlyForecast(currentAQI, extractedTime);
+
+      // Build pollutants object from API data
+      const pollutants = {};
+      if (results.pm25) {
+        pollutants['PM2.5'] = { value: results.pm25.value, risk: results.pm25.status };
+      }
+      if (results.o3) {
+        pollutants['O3'] = { value: results.o3.value, risk: results.o3.status };
+      }
+      if (results.wind_speed) {
+        pollutants['Wind Speed'] = { value: results.wind_speed.value, risk: results.wind_speed.status || 'Normal' };
+      }
+
+      // Extract temperature and wind speed for display
+      const temperature = results.temperature ? results.temperature.value : null;
+      const windSpeed = results.wind_speed ? results.wind_speed.value : null;
+
+      return {
+        location: context.original_prompt ?
+          (context.original_prompt.match(/in ([A-Za-z\s]+)/)?.[1] || 'Current Location') :
+          'Current Location',
+        currentAQI: Math.round(currentAQI),
+        healthRisk: aqiData.status || 'Unknown',
+        recommendation: analysis.recommendations?.[0] || 'No specific recommendations',
+        recommendations: analysis.recommendations || [],
+        timeData,
+        pollutants,
+        mapCenter: [39.8283, -98.5795], // Default, will be updated based on location
+        temperature,
+        windSpeed
+      };
+    }
+
+    // Fallback to mock data
     const location = queryString.includes('maryland') ? 'Maryland Park' :
                     queryString.includes('dublin') ? 'Dublin' :
                     queryString.includes('cork') ? 'Cork' : 'Current Location';
-    
+
     return {
       location,
       currentAQI: 42,
       healthRisk: queryString.includes('asthma') ? 'Moderate Risk' : 'Low Risk',
-      recommendation: queryString.includes('asthma') ? 
+      recommendation: queryString.includes('asthma') ?
         'Consider indoor activities or wait for better air quality' :
         'Safe for outdoor activities',
+      recommendations: ['No API data available'],
       timeData: [
         { time: '12:00', aqi: 38 },
         { time: '13:00', aqi: 42 },
@@ -67,10 +165,8 @@ const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
         { time: '18:00', aqi: 36 }
       ],
       pollutants: {
-        pm25: { value: 12.5, risk: queryString.includes('asthma') ? 'High' : 'Moderate' },
-        pm10: { value: 18.2, risk: 'Low' },
-        o3: { value: 35.8, risk: queryString.includes('asthma') ? 'Moderate' : 'Low' },
-        no2: { value: 15.3, risk: 'Low' }
+        'PM2.5': { value: 12.5, risk: queryString.includes('asthma') ? 'High' : 'Moderate' },
+        'O3': { value: 35.8, risk: queryString.includes('asthma') ? 'Moderate' : 'Low' },
       },
       mapCenter: queryString.includes('dublin') ? [53.3498, -6.2603] : [39.8283, -98.5795]
     };
@@ -157,7 +253,7 @@ const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <h3>Current Conditions - {data.location}</h3>
+            <h3>Air Quality Index</h3>
             <div className="summary-content">
               <div className="aqi-display">
                 <span className="aqi-value">{data.currentAQI}</span>
@@ -165,20 +261,51 @@ const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
               </div>
               <div className="health-info">
                 <div className="health-risk">
-                  <span className="label">Health Risk:</span>
+                  <span className="label">Health Risk</span>
                   <span className={`value ${data.healthRisk.toLowerCase().replace(' ', '-')}`}>
                     {data.healthRisk}
                   </span>
                 </div>
-                <div className="recommendation">
-                  <span className="label">Recommendation:</span>
-                  <span className="value">{data.recommendation}</span>
-                </div>
+                {data.temperature && (
+                  <div className="weather-info">
+                    <span className="label">Temperature</span>
+                    <span className="value">{Math.round(data.temperature)}°C</span>
+                  </div>
+                )}
+                {data.windSpeed && (
+                  <div className="weather-info">
+                    <span className="label">Wind Speed</span>
+                    <span className="value">{Math.round(data.windSpeed)} m/s</span>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
+            className="recommendations-card"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <h3>Recommendations</h3>
+            <div className="recommendations-content">
+              {data.recommendations && data.recommendations.length > 0 ? (
+                <ul className="recommendations-list">
+                  {data.recommendations.map((recommendation, index) => (
+                    <li key={index} className="recommendation-item">
+                      <span className="recommendation-bullet">•</span>
+                      <span className="recommendation-text">{recommendation}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="no-recommendations">No specific recommendations available.</p>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
             className="chart-card"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -190,11 +317,11 @@ const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="chart-card"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
           >
             <h3>Key Pollutants</h3>
             <div style={{ height: '300px' }}>
@@ -202,15 +329,15 @@ const QueryDashboard = ({ userQuery, onAdvancedDashboard, onBack }) => {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="map-card"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1, duration: 0.5 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
           >
-            <h3>Location View</h3>
-            <MapContainer 
-              center={data.mapCenter} 
+            <h3>Location View - {data.location}</h3>
+            <MapContainer
+              center={data.mapCenter}
               zoom={data.mapCenter[0] === 53.3498 ? 12 : 4}
               style={{ height: '300px', width: '100%' }}
             >

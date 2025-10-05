@@ -1,7 +1,8 @@
 .advanced-dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  background: var(--bg-primary);
   padding: 2rem 0;
+  transition: background-color 0.3s ease;
 }
 
 .advanced-container {
@@ -16,18 +17,18 @@
   gap: 1rem;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .back-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.5rem 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -35,7 +36,7 @@
 }
 
 .back-button:hover {
-  background: #f8fafc;
+  background: var(--bg-primary);
   border-color: #cbd5e1;
   color: #475569;
 }
@@ -43,7 +44,7 @@
 .advanced-header h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -51,7 +52,7 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 2rem;
-  background: white;
+  background: var(--bg-secondary);
   padding: 0.5rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -71,7 +72,7 @@
   white-space: nowrap;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .tab-button:hover {
@@ -90,11 +91,11 @@
 }
 
 .tab-content {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
 }
 
 /* Overview Tab Styles */
@@ -106,7 +107,7 @@
 }
 
 .metric-card {
-  background: #f8fafc;
+  background: var(--bg-primary);
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
@@ -118,39 +119,60 @@
 
 .metric-card h3,
 .metric-card h4 {
-  margin: 0 0 0.5rem 0;
-  color: #374151;
-  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 1.5rem;
+  color: var(--text-primary);
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .metric-card.large h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 1.1rem;
+  margin-bottom: 0;
+  padding: 1rem;
+}
+
+.metric-card.large {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
 }
 
 .large-metric {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  margin-right: 5rem;
+  gap: 1rem;
 }
 
 .large-metric .value {
   font-size: 3rem;
   font-weight: 800;
-  color: #1e3a8a;
+  color: var(--text-primary);
   line-height: 1;
 }
 
 .large-metric .label {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #10b981;
   font-weight: 600;
 }
 
+
+
 .metric-card .value {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--text-primary);
+  margin-left: 2rem;
 }
 
 .chart-container {
@@ -159,7 +181,7 @@
 
 .chart-container h3 {
   margin: 0 0 1rem 0;
-  color: #374151;
+  color: var(--text-primary);
   font-size: 1.2rem;
   font-weight: 600;
 }
@@ -171,8 +193,16 @@
   gap: 2rem;
 }
 
+.forecast-heading {
+  color: #000000 !important;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+}
+
 .forecast-details {
-  background: #f8fafc;
+  background: var(--bg-primary);
   border-radius: 8px;
   padding: 1.5rem;
 }
@@ -182,7 +212,7 @@
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .forecast-item:last-child {
@@ -191,13 +221,13 @@
 
 .forecast-item .day {
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .forecast-item .aqi,
 .forecast-item .temp {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 /* Pollutants Tab Styles */
@@ -208,9 +238,17 @@
 }
 
 .pollutant-details {
-  background: #f8fafc;
+  background: var(--bg-primary);
   border-radius: 8px;
   padding: 1.5rem;
+}
+
+.pollutant-heading {
+  color: #000000 !important;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
 }
 
 .pollutant-item {
@@ -223,7 +261,7 @@
 
 .pollutant-item .name {
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
@@ -243,7 +281,7 @@
 .pollutant-item .percentage {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
   text-align: right;
 }
 
@@ -252,6 +290,14 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
+}
+
+.health-heading {
+  color: #000000 !important;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
 }
 
 .health-overview {
@@ -283,7 +329,7 @@
 }
 
 .health-risks {
-  background: #f8fafc;
+  background: var(--bg-primary);
   border-radius: 8px;
   padding: 1.5rem;
 }
@@ -293,7 +339,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .risk-item:last-child {
@@ -302,7 +348,7 @@
 
 .risk-item .category {
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .risk-item .risk {
@@ -332,6 +378,14 @@
   width: 100%;
 }
 
+.map-heading {
+    color: #000000 !important;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.5px;
+}
+
 .map-container-advanced .leaflet-container {
   border-radius: 8px;
   z-index: 1;
@@ -339,13 +393,13 @@
 
 .popup-content h4 {
   margin: 0 0 0.5rem 0;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .popup-content p {
   margin: 0.25rem 0;
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 /* Responsive Design */

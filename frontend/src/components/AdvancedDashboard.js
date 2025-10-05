@@ -174,7 +174,7 @@ const AdvancedDashboard = ({ onBack }) => {
             </div>
           </div>
           <div className="forecast-details">
-            <h3>Detailed Forecast</h3>
+            <h3 className="forecast-heading">Detailed Forecast</h3>
             {data.weeklyForecast.map((day, index) => (
               <div key={index} className="forecast-item">
                 <span className="day">{day.day}</span>
@@ -209,7 +209,7 @@ const AdvancedDashboard = ({ onBack }) => {
             </div>
           </div>
           <div className="pollutant-details">
-            <h3>Pollutant Levels</h3>
+  <h3 className="pollutant-heading">Pollutant Levels</h3>
             {Object.entries(data.pollutantBreakdown).map(([pollutant, percentage]) => (
               <div key={pollutant} className="pollutant-item">
                 <span className="name">{pollutant.toUpperCase()}</span>
@@ -229,7 +229,7 @@ const AdvancedDashboard = ({ onBack }) => {
     <div className="tab-content">
       <div className="health-grid">
         <div className="health-overview">
-          <h3>Health Impact Assessment</h3>
+          <h3 className="health-heading">Health Impact Assessment</h3>
           <div className="health-score">
             <div className="score-circle">
               <span className="score">{data.healthMetrics.overallHealthIndex}</span>
@@ -238,7 +238,7 @@ const AdvancedDashboard = ({ onBack }) => {
           </div>
         </div>
         <div className="health-risks">
-          <h3>Risk Categories</h3>
+          <h3 className="health-heading">Risk Categories</h3>
           <div className="risk-item">
             <span className="category">Respiratory Risk</span>
             <span className={`risk ${data.healthMetrics.respiratoryRisk.toLowerCase()}`}>
@@ -265,16 +265,21 @@ const AdvancedDashboard = ({ onBack }) => {
   const renderMap = () => (
     <div className="tab-content">
       <div className="map-container-advanced">
-        <h3>Regional Air Quality</h3>
+        <h3 className="map-heading">Regional Air Quality</h3>
         <MapContainer 
-          center={[53.0, -7.5]} 
-          zoom={7}
-          style={{ height: '500px', width: '100%' }}
-        >
+        center={[53.0, -7.5]} 
+        zoom={7}
+        style={{ height: '500px', width: '100%' }}
+        maxBounds={[[-90, -180], [90, 180]]} 
+        minZoom={2} 
+        maxBoundsViscosity={1.0}
+      >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
+          noWrap={true} // Prevent tile repetition
+          bounds={[[-90, -180], [90, 180]]} // Set tile bounds
+        />
           {data.locations.map(location => (
             <React.Fragment key={location.id}>
               <Circle

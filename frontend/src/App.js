@@ -12,6 +12,7 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState('landing');
   const [userQuery, setUserQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
+  const [apiData, setApiData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleQuerySubmit = async (query) => {
@@ -25,17 +26,28 @@ function App() {
     setUserQuery(query.trim());
 
     try {
+      console.log('📤 Sending POST request to /api/extract-parameters');
+      console.log('📝 Prompt:', query.trim());
+
       // Call the actual API endpoint
       const response = await extractParameters(query.trim());
+
+      console.log('✅ Response received from API:');
+      console.log('================================================================================');
+      console.log(JSON.stringify(response, null, 2));
+      console.log('================================================================================');
 
       // Extract display_text from the response
       const displayText = response.display_text || "I couldn't process your query. Please try again.";
 
       setAiResponse(displayText);
+      setApiData(response); // Store the full API response
       setCurrentScreen('response');
     } catch (error) {
-      console.error('Error submitting query:', error);
+      console.error('❌ Error submitting query:', error);
+      console.error('Error details:', error.response?.data || error.message);
       setAiResponse("I'm sorry, I encountered an error processing your request. Please try again.");
+      setApiData(null);
       setCurrentScreen('response');
     } finally {
       setIsLoading(false);
@@ -98,6 +110,7 @@ function App() {
         return (
           <QueryDashboard
             userQuery={userQuery}
+            apiData={apiData}
             onAdvancedDashboard={handleAdvancedDashboard}
             onBack={handleBack}
           />

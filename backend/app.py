@@ -94,6 +94,7 @@ def get_weather_metrics():
     try:
         # Default location (can be made configurable)
         default_location = request.args.get('location', 'Athlone')
+        default_location = request.args.get('location', 'Athlone')
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         logger.info(f"Getting frontend metrics for {default_location}")
@@ -105,8 +106,8 @@ def get_weather_metrics():
             lat, lon = coords['lat'], coords['lon']
             location_name = coords['display_name']
         else:
-            # Fallback to New York coordinates
-            lat, lon = 40.7128, -74.0060
+            # Fallback to Athlone coordinates
+            lat, lon = 53.2734, -8.1111
         
         # Get comprehensive predictions
         predictions = predictor.predict_comprehensive(lat, lon, current_time)
@@ -234,7 +235,7 @@ def extract_parameters():
         
         app.logger.info(f"Final response: {result}")
         app.logger.info("=== Request Processing Completed ===")
-        
+
         return jsonify(result), result['status_code']
         
     except Exception as e:

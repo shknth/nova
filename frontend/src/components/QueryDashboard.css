@@ -1,7 +1,8 @@
 .query-dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  background: var(--bg-primary);
   padding: 2rem 0;
+  transition: background-color 0.3s ease;
 }
 
 .dashboard-container {
@@ -16,18 +17,18 @@
   gap: 1rem;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .back-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.5rem 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -36,21 +37,21 @@
 }
 
 .back-button:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #475569;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
 }
 
 .header-content h1 {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .query-text {
   font-style: italic;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 1rem;
   margin: 0;
   line-height: 1.5;
@@ -58,88 +59,109 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
 .summary-card,
 .chart-card,
-.map-card {
-  background: white;
+.map-card,
+.recommendations-card {
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .summary-card {
+  grid-column: span 1;
+}
+
+.recommendations-card {
   grid-column: span 2;
+}
+
+.chart-card,
+.map-card {
+  grid-column: span 1;
 }
 
 .summary-card h3,
 .chart-card h3,
-.map-card h3 {
+.map-card h3,
+.recommendations-card h3 {
   margin: 0 0 1rem 0;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .summary-content {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 250px;
 }
 
 .aqi-display {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
-  background: #f8fafc;
+  padding: 2rem;
+  background: var(--bg-primary);
   border-radius: 12px;
-  min-width: 120px;
+  width: 100%;
 }
 
 .aqi-value {
-  font-size: 3rem;
+  font-size: 4rem;
   font-weight: 800;
-  color: #1e3a8a;
+  color: var(--accent-primary);
   line-height: 1;
+  margin-bottom: 0.5rem;
 }
 
 .aqi-label {
-  font-size: 0.9rem;
-  color: #64748b;
-  font-weight: 500;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .health-info {
-  flex: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
 }
 
-.health-risk,
-.recommendation {
+.health-risk {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  width: 100%;
 }
 
-.health-risk .label,
-.recommendation .label {
-  font-size: 0.9rem;
+.health-risk .label {
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.health-risk .value,
-.recommendation .value {
-  font-size: 1rem;
-  color: #64748b;
+.health-risk .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .health-risk .value.moderate-risk {
@@ -155,6 +177,37 @@
 .health-risk .value.high-risk {
   color: #ef4444;
   font-weight: 600;
+}
+
+.weather-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.weather-info:hover {
+  border-color: var(--accent-primary);
+  transform: translateX(2px);
+}
+
+.weather-info .label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.weather-info .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-primary);
 }
 
 .chart-card canvas {
@@ -194,18 +247,79 @@
   box-shadow: 0 6px 16px rgba(30, 58, 138, 0.4);
 }
 
-@media (max-width: 1024px) {
+/* Recommendations Card Styles */
+.recommendations-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.recommendations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recommendation-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent-primary);
+  transition: all 0.2s ease;
+}
+
+.recommendation-item:hover {
+  background: var(--accent-secondary);
+  transform: translateX(4px);
+}
+
+.recommendation-bullet {
+  color: var(--accent-primary);
+  font-weight: 700;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.recommendation-text {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.no-recommendations {
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-card,
+  .recommendations-card,
+  .chart-card,
+  .map-card {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  
-  .summary-card {
+
+  .summary-card,
+  .recommendations-card,
+  .chart-card,
+  .map-card {
     grid-column: span 1;
-  }
-  
-  .summary-content {
-    flex-direction: column;
-    gap: 1rem;
   }
 }
 
