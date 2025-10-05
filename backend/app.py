@@ -80,7 +80,7 @@ def get_weather_metrics():
     """Get basic weather metrics for frontend landing page"""
     try:
         # Default location (can be made configurable)
-        default_location = request.args.get('location', 'New York')
+        default_location = request.args.get('location', 'Athlone')
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         app.logger.info(f"Getting frontend metrics for {default_location}")
@@ -91,8 +91,8 @@ def get_weather_metrics():
         if coords:
             lat, lon = coords['lat'], coords['lon']
         else:
-            # Fallback to New York coordinates
-            lat, lon = 40.7128, -74.0060
+            # Fallback to Athlone coordinates
+            lat, lon = 53.2734, -8.1111
         
         # Get comprehensive predictions
         predictions = predictor.predict_comprehensive(lat, lon, current_time)

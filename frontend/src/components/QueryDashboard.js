@@ -247,7 +247,7 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <h3>Current Conditions - {data.location}</h3>
+            <h3>Air Quality Index</h3>
             <div className="summary-content">
               <div className="aqi-display">
                 <span className="aqi-value">{data.currentAQI}</span>
@@ -255,20 +255,39 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
               </div>
               <div className="health-info">
                 <div className="health-risk">
-                  <span className="label">Health Risk:</span>
+                  <span className="label">Health Risk</span>
                   <span className={`value ${data.healthRisk.toLowerCase().replace(' ', '-')}`}>
                     {data.healthRisk}
                   </span>
-                </div>
-                <div className="recommendation">
-                  <span className="label">Recommendation:</span>
-                  <span className="value">{data.recommendation}</span>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
+            className="recommendations-card"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <h3>Recommendations</h3>
+            <div className="recommendations-content">
+              {data.recommendations && data.recommendations.length > 0 ? (
+                <ul className="recommendations-list">
+                  {data.recommendations.map((recommendation, index) => (
+                    <li key={index} className="recommendation-item">
+                      <span className="recommendation-bullet">•</span>
+                      <span className="recommendation-text">{recommendation}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="no-recommendations">No specific recommendations available.</p>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
             className="chart-card"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -280,11 +299,11 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="chart-card"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
           >
             <h3>Key Pollutants</h3>
             <div style={{ height: '300px' }}>
@@ -296,9 +315,9 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
             className="map-card"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1, duration: 0.5 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
           >
-            <h3>Location View</h3>
+            <h3>Location View - {data.location}</h3>
             <MapContainer
               center={data.mapCenter}
               zoom={data.mapCenter[0] === 53.3498 ? 12 : 4}
@@ -328,29 +347,6 @@ const QueryDashboard = ({ userQuery, apiData, onAdvancedDashboard, onBack }) => 
                 </Popup>
               </Marker>
             </MapContainer>
-          </motion.div>
-
-          <motion.div
-            className="recommendations-card"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
-          >
-            <h3>Recommendations</h3>
-            <div className="recommendations-content">
-              {data.recommendations && data.recommendations.length > 0 ? (
-                <ul className="recommendations-list">
-                  {data.recommendations.map((recommendation, index) => (
-                    <li key={index} className="recommendation-item">
-                      <span className="recommendation-bullet">•</span>
-                      <span className="recommendation-text">{recommendation}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="no-recommendations">No specific recommendations available.</p>
-              )}
-            </div>
           </motion.div>
         </div>
 

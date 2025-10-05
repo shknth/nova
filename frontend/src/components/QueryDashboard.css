@@ -59,7 +59,7 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -77,11 +77,16 @@
 }
 
 .summary-card {
-  grid-column: span 2;
+  grid-column: span 1;
 }
 
 .recommendations-card {
   grid-column: span 2;
+}
+
+.chart-card,
+.map-card {
+  grid-column: span 1;
 }
 
 .summary-card h3,
@@ -96,58 +101,67 @@
 
 .summary-content {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 250px;
 }
 
 .aqi-display {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
+  padding: 2rem;
   background: var(--bg-primary);
   border-radius: 12px;
-  min-width: 120px;
+  width: 100%;
 }
 
 .aqi-value {
-  font-size: 3rem;
+  font-size: 4rem;
   font-weight: 800;
   color: var(--accent-primary);
   line-height: 1;
+  margin-bottom: 0.5rem;
 }
 
 .aqi-label {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .health-info {
-  flex: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
 }
 
-.health-risk,
-.recommendation {
+.health-risk {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  width: 100%;
 }
 
-.health-risk .label,
-.recommendation .label {
-  font-size: 0.9rem;
+.health-risk .label {
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.health-risk .value,
-.recommendation .value {
-  font-size: 1rem;
-  color: var(--text-secondary);
+.health-risk .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .health-risk .value.moderate-risk {
@@ -252,19 +266,29 @@
   padding: 2rem;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-card,
+  .recommendations-card,
+  .chart-card,
+  .map-card {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  
-  .summary-card,
-  .recommendations-card {
-    grid-column: span 1;
-  }
 
-  .summary-content {
-    flex-direction: column;
-    gap: 1rem;
+  .summary-card,
+  .recommendations-card,
+  .chart-card,
+  .map-card {
+    grid-column: span 1;
   }
 }
 

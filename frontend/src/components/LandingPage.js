@@ -10,6 +10,12 @@ const LandingPage = ({ onQuerySubmit }) => {
     onQuerySubmit(query);
   };
 
+  const handleExampleClick = (exampleQuery) => {
+    // Remove quotes from the example and submit
+    const cleanQuery = exampleQuery.replace(/^["']|["']$/g, '');
+    onQuerySubmit(cleanQuery);
+  };
+
   return (
     <motion.div 
       className="landing-page"
@@ -51,13 +57,22 @@ const LandingPage = ({ onQuerySubmit }) => {
           <div className="example-queries">
             <p className="example-label">Try asking:</p>
             <div className="example-items">
-              <span className="example-item">
+              <span
+                className="example-item clickable"
+                onClick={() => handleExampleClick("My son has asthma and wants to play in Maryland park at 2:00pm today. Is it okay?")}
+              >
                 "My son has asthma and wants to play in Maryland park at 2:00pm today. Is it okay?"
               </span>
-              <span className="example-item">
+              <span
+                className="example-item clickable"
+                onClick={() => handleExampleClick("Is it safe to go jogging this evening in downtown Dublin?")}
+              >
                 "Is it safe to go jogging this evening in downtown Dublin?"
               </span>
-              <span className="example-item">
+              <span
+                className="example-item clickable"
+                onClick={() => handleExampleClick("What's the air quality forecast for tomorrow morning?")}
+              >
                 "What's the air quality forecast for tomorrow morning?"
               </span>
             </div>
