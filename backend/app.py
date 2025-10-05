@@ -94,15 +94,19 @@ def get_weather_metrics():
             lat, lon = 40.7128, -74.0060
         
         # Get comprehensive predictions
-        predictions = predictor.predict_comprehensive(lat, lon, current_time,logger=app.logger)
-        
+        predictions = predictor.predict_comprehensive(lat, lon, current_time)
+
+        # Convert numpy types to native Python types and round to 2 decimal places
+        metrics = predictions['frontend_metrics']
+        converted_metrics = {k: round(float(v), 2) if hasattr(v, 'item') else v for k, v in metrics.items()}
+
         # Return just the frontend metrics
         return jsonify({
             'status': 'success',
             'location': default_location,
             'coordinates': {'lat': lat, 'lon': lon},
             'timestamp': current_time,
-            'metrics': predictions['frontend_metrics']
+            'metrics': converted_metrics
         })
         
     except Exception as e:
