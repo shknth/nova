@@ -11,7 +11,7 @@ from utils.realtime_data_source import realtime_data_source
 from utils.dashboard_config import dashboard_config
 from model_design import AirQualityPredictor
 from utils.geocoding import GeocodingService
-from utils.gcs_data_manager import ensure_data_downloaded
+
 
 # Load environment variables
 load_dotenv()
@@ -1004,108 +1004,6 @@ def create_custom_dashboard():
         return jsonify({
             'status_code': 500,
             'message': 'Internal server error while creating custom dashboard'
-        }), 500
-
-@app.route('/api/data/status', methods=['GET'])
-def get_data_status():
-    """Get current data availability status"""
-    try:
-        from utils.gcs_data_manager import get_gcs_manager
-        
-        manager = get_gcs_manager()
-        status = manager.check_local_data_exists()
-        
-        return jsonify({
-            'status_code': 200,
-            'message': 'Data status retrieved successfully',
-            'data_status': status,
-            'bucket_name': manager.bucket_name
-        }), 200
-        
-    except Exception as e:
-        app.logger.error(f"Error getting data status: {str(e)}")
-        return jsonify({
-            'status_code': 500,
-            'message': 'Internal server error while checking data status',
-            'error': str(e)
-        }), 500
-
-@app.route('/api/data/download', methods=['POST'])
-def download_data():
-    """Manually trigger data download from GCS"""
-    try:
-        from utils.gcs_data_manager import get_gcs_manager
-        
-        manager = get_gcs_manager()
-        
-        # Get request parameters
-        data = request.get_json() or {}
-        force_download = data.get('force', False)
-        
-        # Check if data already exists and force is not set
-        if not force_download:
-            status = manager.check_local_data_exists()
-            if status['data_folder_exists'] and status['preprocessed_folder_exists']:
-                return jsonify({
-                    'status_code': 200,
-                    'message': 'Data already exists locally. Use force=true to re-download.',
-                    'data_status': status
-                }), 200
-        
-        # Download data
-        success = manager.download_all_data()
-        
-        if success:
-            # Get updated status
-            status = manager.check_local_data_exists()
-            return jsonify({
-                'status_code': 200,
-                'message': 'Data downloaded successfully from GCS',
-                'data_status': status
-            }), 200
-        else:
-            return jsonify({
-                'status_code': 500,
-                'message': 'Failed to download data from GCS'
-            }), 500
-        
-    except Exception as e:
-        app.logger.error(f"Error downloading data: {str(e)}")
-        return jsonify({
-            'status_code': 500,
-            'message': 'Internal server error while downloading data',
-            'error': str(e)
-        }), 500
-
-@app.route('/api/data/bucket-contents', methods=['GET'])
-def list_bucket_contents():
-    """List contents of the GCS bucket"""
-    try:
-        from utils.gcs_data_manager import get_gcs_manager
-        
-        manager = get_gcs_manager()
-        
-        # Get query parameters
-        prefix = request.args.get('prefix', '')
-        
-        # List bucket contents
-        contents = manager.list_bucket_contents(prefix=prefix)
-        
-        return jsonify({
-            'status_code': 200,
-            'message': 'Bucket contents retrieved successfully',
-            'bucket_name': manager.bucket_name,
-            'prefix': prefix,
-            'files': contents,
-            'file_count': len(contents)
-        }), 200
-        
-    except Exception as e:
-        app.logger.error(f"Error listing bucket contents: {str(e)}")
-        return jsonify({
-            'status_code': 500,
-            'message': 'Internal server error while listing bucket contents',
-            'error': str(e)
         }), 500
 
 if __name__ == "__main__":
