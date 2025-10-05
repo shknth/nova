@@ -9,6 +9,9 @@ from utils.alert_system import alert_system, AlertType, AlertSeverity
 from utils.alert_templates import AlertTemplates, AlertUIComponents
 from utils.realtime_data_source import realtime_data_source
 from utils.dashboard_config import dashboard_config
+from model_design import AirQualityPredictor
+from utils.geocoding import GeocodingService
+from utils.gcs_data_manager import ensure_data_downloaded
 
 # Load environment variables
 load_dotenv()
@@ -18,6 +21,31 @@ app = Flask(__name__)
 CORS(app)
 input_agent = InputAgent()
 output_agent = OutputAgent()
+
+# Ensure data is available from GCS
+print("📥 Ensuring data availability from GCS...")
+data_available = ensure_data_downloaded()
+if not data_available:
+    print("⚠️  Warning: Could not download data from GCS, will attempt to use local data")
+
+# Initialize ML model and geocoding service
+print("🚀 Initializing Air Quality Prediction Model...")
+predictor = AirQualityPredictor()
+geocoding_service = GeocodingService()
+
+# Load and train model on startup
+try:
+    predictor.load_data(dry_run=False)  # Use full dataset
+    X, y = predictor.prepare_features()
+    predictor.train_model(X, y)
+    print("✅ Model trained and ready for predictions!")
+except Exception as e:
+    print(f"⚠️  Model training failed, using dry run mode: {str(e)}")
+    # Fallback to dry run mode
+    predictor.load_data(dry_run=True, sample_size=100)
+    X, y = predictor.prepare_features()
+    predictor.train_model(X, y)
+    print("✅ Model trained in dry run mode!")
 
 # Error handling
 class InvalidUsage(Exception):
@@ -49,6 +77,51 @@ def health_check():
         'status': 'success',
         'message': 'Service is running'
     })
+
+# Frontend metrics endpoint
+@app.route('/api/weather-metrics', methods=['GET'])
+def get_weather_metrics():
+    """Get basic weather metrics for frontend landing page"""
+    try:
+        # Default location (can be made configurable)
+        default_location = request.args.get('location', 'New York')
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        app.logger.info(f"Getting frontend metrics for {default_location}")
+        
+        # Get coordinates for default location
+        coords = geocoding_service.geocode(default_location)
+        
+        if coords:
+            lat, lon = coords['lat'], coords['lon']
+        else:
+            # Fallback to New York coordinates
+            lat, lon = 40.7128, -74.0060
+        
+        # Get comprehensive predictions
+        predictions = predictor.predict_comprehensive(lat, lon, current_time)
+        
+        # Return just the frontend metrics
+        return jsonify({
+            'status': 'success',
+            'location': default_location,
+            'coordinates': {'lat': lat, 'lon': lon},
+            'timestamp': current_time,
+            'metrics': predictions['frontend_metrics']
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error getting frontend metrics: {str(e)}")
+        # Return default values on error
+        return jsonify({
+            'status': 'error',
+            'metrics': {
+                'temperature': 22,
+                'aqi': 42,
+                'humidity': 65,
+                'windSpeed': 12
+            }
+        }), 500
 
 # Main parameter extraction endpoint
 @app.route('/api/extract-parameters', methods=['POST'])
@@ -110,26 +183,30 @@ def extract_parameters():
         # Add original prompt to parameters
         extracted_params['original_prompt'] = data['prompt']
         
-        # Get model predictions (placeholder for now)
-        predictions = {
-            "satellite_data": {
-                "tempo_no2": 2.5e15,
-                "tempo_ch2o": 8e14,
-                "tropomi_co": 1.8e18,
-                "modis_aod": 0.25
-            },
-            "weather_data": {
-                "temperature_2m": 285.5,
-                "pbl_height": 800,
-                "wind_speed": 5.2,
-                "precipitation": 0.0
-            },
-            "air_quality": {
-                "pm25": 28.5,
-                "o3": 85.2,
-                "aqi": 95
-            }
-        }
+        # Get model predictions using actual ML model
+        app.logger.info("Getting model predictions...")
+        
+        # Extract location and datetime from parameters
+        location_name = extracted_params.get('location', 'New York')  # Default location
+        datetime_str = extracted_params.get('datetime', '2025-09-01 14:00:00')  # Default time
+        
+        app.logger.info(f"Location: {location_name}, DateTime: {datetime_str}")
+        
+        # Convert location name to coordinates using geocoding
+        coords = geocoding_service.geocode(location_name)
+        
+        if coords:
+            lat, lon = coords['lat'], coords['lon']
+            app.logger.info(f"Coordinates found: {lat}, {lon}")
+            
+            # Get model predictions
+            predictions = predictor.predict_comprehensive(lat, lon, datetime_str)
+            app.logger.info("Model predictions generated successfully")
+            
+        else:
+            app.logger.warning(f"Could not geocode location: {location_name}, using default coordinates")
+            # Fallback to default coordinates (New York)
+            predictions = predictor.predict_comprehensive(40.7128, -74.0060, datetime_str)
         
         # Generate response using Output Agent
         result = output_agent.analyze_predictions(predictions, extracted_params)
@@ -929,9 +1006,111 @@ def create_custom_dashboard():
             'message': 'Internal server error while creating custom dashboard'
         }), 500
 
+@app.route('/api/data/status', methods=['GET'])
+def get_data_status():
+    """Get current data availability status"""
+    try:
+        from utils.gcs_data_manager import get_gcs_manager
+        
+        manager = get_gcs_manager()
+        status = manager.check_local_data_exists()
+        
+        return jsonify({
+            'status_code': 200,
+            'message': 'Data status retrieved successfully',
+            'data_status': status,
+            'bucket_name': manager.bucket_name
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error getting data status: {str(e)}")
+        return jsonify({
+            'status_code': 500,
+            'message': 'Internal server error while checking data status',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/data/download', methods=['POST'])
+def download_data():
+    """Manually trigger data download from GCS"""
+    try:
+        from utils.gcs_data_manager import get_gcs_manager
+        
+        manager = get_gcs_manager()
+        
+        # Get request parameters
+        data = request.get_json() or {}
+        force_download = data.get('force', False)
+        
+        # Check if data already exists and force is not set
+        if not force_download:
+            status = manager.check_local_data_exists()
+            if status['data_folder_exists'] and status['preprocessed_folder_exists']:
+                return jsonify({
+                    'status_code': 200,
+                    'message': 'Data already exists locally. Use force=true to re-download.',
+                    'data_status': status
+                }), 200
+        
+        # Download data
+        success = manager.download_all_data()
+        
+        if success:
+            # Get updated status
+            status = manager.check_local_data_exists()
+            return jsonify({
+                'status_code': 200,
+                'message': 'Data downloaded successfully from GCS',
+                'data_status': status
+            }), 200
+        else:
+            return jsonify({
+                'status_code': 500,
+                'message': 'Failed to download data from GCS'
+            }), 500
+        
+    except Exception as e:
+        app.logger.error(f"Error downloading data: {str(e)}")
+        return jsonify({
+            'status_code': 500,
+            'message': 'Internal server error while downloading data',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/data/bucket-contents', methods=['GET'])
+def list_bucket_contents():
+    """List contents of the GCS bucket"""
+    try:
+        from utils.gcs_data_manager import get_gcs_manager
+        
+        manager = get_gcs_manager()
+        
+        # Get query parameters
+        prefix = request.args.get('prefix', '')
+        
+        # List bucket contents
+        contents = manager.list_bucket_contents(prefix=prefix)
+        
+        return jsonify({
+            'status_code': 200,
+            'message': 'Bucket contents retrieved successfully',
+            'bucket_name': manager.bucket_name,
+            'prefix': prefix,
+            'files': contents,
+            'file_count': len(contents)
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error listing bucket contents: {str(e)}")
+        return jsonify({
+            'status_code': 500,
+            'message': 'Internal server error while listing bucket contents',
+            'error': str(e)
+        }), 500
+
 if __name__ == "__main__":
     # Start real-time monitoring
     realtime_data_source.start_monitoring(alert_system)
     
-    port = int(os.getenv('PORT', 8080))
+    port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

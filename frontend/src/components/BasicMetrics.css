@@ -50,6 +50,42 @@
   color: inherit; /* Will be overridden by inline style */
 }
 
+/* Loading and Error States */
+.basic-metrics.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.loading-indicator svg {
+  font-size: 1.5rem;
+  color: var(--accent-primary);
+}
+
+.error-indicator {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.error-indicator small {
+  color: #ef4444;
+  font-size: 0.8rem;
+}
+
 @media (max-width: 768px) {
   .basic-metrics {
     grid-template-columns: repeat(2, 1fr);
