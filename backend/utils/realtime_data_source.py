@@ -19,8 +19,18 @@ class RealtimeDataSource:
     
     def __init__(self):
         self.openaq_api_key = "edca264c44c7f9f67ed3c43e6e53fd7eddc84fa474b3ef268bddabe26d3b6f7e"
-        self.data_cache = {}
-        self.cache_duration = 300  # 5 minutes
+        # Cache structure
+        self.data_cache = {}  # Short-term data cache
+        self.sensor_cache = {}  # Long-term sensor ID cache
+        self.location_cache = {}  # Long-term location details cache
+        self.historical_cache = {}  # Historical data cache
+        
+        # Cache durations
+        self.data_cache_duration = 300  # 5 minutes for real-time data
+        self.sensor_cache_duration = 3600  # 1 hour for sensor IDs
+        self.location_cache_duration = 3600  # 1 hour for location details
+        self.historical_cache_duration = 3600  # 1 hour for historical data
+        
         self.monitoring_locations = set()
         
     def add_monitoring_location(self, location: str):
@@ -188,6 +198,158 @@ class RealtimeDataSource:
     def _generate_simulated_data(self, location: str) -> Dict[str, Any]:
         """Generate simulated real-time data for demo purposes"""
         import random
+        
+        # Generate basic simulated data
+        data = {
+            'location': location,
+            'timestamp': datetime.now().isoformat(),
+            'source': 'Simulated',
+            'air_quality': {
+                'pm25': round(random.uniform(5, 35), 2),
+                'o3': round(random.uniform(0, 0.1), 3),
+                'no2': round(random.uniform(0, 0.1), 3),
+                'co': round(random.uniform(0.5, 5), 2),
+            }
+        }
+        
+        # Calculate simulated AQI based on PM2.5
+        pm25 = data['air_quality']['pm25']
+        if pm25 <= 12:
+            aqi = pm25 * 50 / 12
+        elif pm25 <= 35.4:
+            aqi = 50 + (pm25 - 12) * 50 / (35.4 - 12)
+        elif pm25 <= 55.4:
+            aqi = 100 + (pm25 - 35.4) * 50 / (55.4 - 35.4)
+        else:
+            aqi = min(300, 150 + (pm25 - 55.4) * 150 / 150)
+        
+        data['air_quality']['aqi'] = round(aqi, 1)
+        return data
+    
+    def get_historical_data(self, location: str, days: int = 7) -> Optional[Dict[str, Any]]:
+        """Get historical data for a location"""
+        cache_key = f"{location.lower()}_historical_{days}"
+        
+        # Check cache
+        if cache_key in self.historical_cache:
+            cached_data = self.historical_cache[cache_key]
+            if datetime.now() - cached_data['timestamp'] < timedelta(seconds=self.historical_cache_duration):
+                return cached_data['data']
+        
+        try:
+            # Get sensors for location
+            sensor_ids = self._get_location_sensors(location)
+            if not sensor_ids:
+                return None
+            
+            historical_data = []
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=days)
+            
+            # Fetch historical data from OpenAQ
+            for sensor_id in sensor_ids:
+                url = "https://api.openaq.org/v2/measurements"
+                params = {
+                    'date_from': start_date.isoformat() + 'Z',
+                    'date_to': end_date.isoformat() + 'Z',
+                    'sensor_id': sensor_id,
+                    'limit': 1000,
+                    'order_by': 'datetime',
+                    'sort': 'asc'
+                }
+                
+                headers = {'X-API-Key': self.openaq_api_key}
+                response = requests.get(url, params=params, headers=headers, timeout=10)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    historical_data.extend(data.get('results', []))
+            
+            # Process and format historical data
+            processed_data = self._process_historical_data(historical_data)
+            
+            # Cache the processed data
+            self.historical_cache[cache_key] = {
+                'data': processed_data,
+                'timestamp': datetime.now()
+            }
+            
+            return processed_data
+            
+        except Exception as e:
+            logger.error(f"Error fetching historical data for {location}: {str(e)}")
+            return None
+    
+    def _get_location_sensors(self, location: str) -> List[str]:
+        """Get OpenAQ sensor IDs for a location"""
+        cache_key = f"{location.lower()}_sensors"
+        
+        # Check cache
+        if cache_key in self.sensor_cache:
+            cached_data = self.sensor_cache[cache_key]
+            if datetime.now() - cached_data['timestamp'] < timedelta(seconds=self.sensor_cache_duration):
+                return cached_data['sensor_ids']
+        
+        try:
+            coords = self._get_location_coordinates(location)
+            if not coords:
+                return []
+            
+            url = "https://api.openaq.org/v2/sensors"
+            params = {
+                'coordinates': f"{coords['lat']},{coords['lon']}",
+                'radius': 10000,  # 10km radius
+                'limit': 100
+            }
+            
+            headers = {'X-API-Key': self.openaq_api_key}
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                sensor_ids = [sensor['sensor_id'] for sensor in data.get('results', [])]
+                
+                # Cache the sensor IDs
+                self.sensor_cache[cache_key] = {
+                    'sensor_ids': sensor_ids,
+                    'timestamp': datetime.now()
+                }
+                
+                return sensor_ids
+                
+            return []
+            
+        except Exception as e:
+            logger.error(f"Error fetching sensors for {location}: {str(e)}")
+            return []
+    
+    def _process_historical_data(self, measurements: List[Dict]) -> Dict[str, Any]:
+        """Process historical measurements into visualization-friendly format"""
+        processed = {
+            'parameters': {},
+            'timestamps': []
+        }
+        
+        # Group measurements by parameter
+        for measurement in measurements:
+            parameter = measurement.get('parameter')
+            value = measurement.get('value')
+            timestamp = measurement.get('datetime')
+            
+            if parameter and value and timestamp:
+                if parameter not in processed['parameters']:
+                    processed['parameters'][parameter] = []
+                processed['parameters'][parameter].append({
+                    'timestamp': timestamp,
+                    'value': value
+                })
+                if timestamp not in processed['timestamps']:
+                    processed['timestamps'].append(timestamp)
+        
+        # Sort timestamps
+        processed['timestamps'].sort()
+        
+        return processed
         
         # Base values with some randomness
         base_values = {
