@@ -2,6 +2,7 @@
 """
 Air Quality Prediction Model Design
 Multi-target regression approach for NASA Space Apps Challenge
+Updated to work with comprehensive_unified_dataset.csv
 """
 
 import pandas as pd
@@ -11,479 +12,359 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.multioutput import MultiOutputRegressor
-from scipy.spatial import KDTree
-from multiprocessing import Pool, cpu_count
+from sklearn.ensemble import RandomForestRegressor
 import os
 import time
-from functools import partial
+import warnings
+warnings.filterwarnings('ignore')
 
-def process_pm25_chunk_static(pm25_chunk, o3_data, datasets):
+def load_comprehensive_dataset(data_path='preprocessed_data/comprehensive_unified_dataset.csv', dry_run=False, sample_size=100):
     """
-    Static function to process a chunk of PM2.5 data in parallel
+    Load the comprehensive unified dataset
     """
-    chunk_results = []
+    print(f"📊 Loading comprehensive dataset from: {data_path}")
     
-    # Create a temporary predictor instance for helper methods
-    predictor = AirQualityPredictor()
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Dataset not found: {data_path}")
     
-    for _, pm25_row in pm25_chunk.iterrows():
-        # Find matching O3 measurement
-        o3_match = o3_data[
-            (o3_data['datetime'] == pm25_row['datetime']) &
-            (o3_data['latitude'] == pm25_row['latitude']) &
-            (o3_data['longitude'] == pm25_row['longitude'])
-        ]
-        
-        if o3_match.empty:
-            continue
-            
-        o3_value = o3_match.iloc[0]['ground_o3']
-        
-        # Find nearest satellite data (spatial and temporal matching)
-        satellite_features = predictor.get_nearest_satellite_data(
-            datasets, pm25_row['datetime'], 
-            pm25_row['latitude'], pm25_row['longitude']
-        )
-        
-        # Find nearest weather data
-        weather_features = predictor.get_nearest_weather_data(
-            datasets, pm25_row['datetime'],
-            pm25_row['latitude'], pm25_row['longitude']
-        )
-        
-        # Combine all features
-        if satellite_features and weather_features:
-            row_data = {
-                'datetime': pm25_row['datetime'],
-                'latitude': pm25_row['latitude'],
-                'longitude': pm25_row['longitude'],
-                'city': pm25_row['city'],
-                
-                # Targets
-                'pm25': pm25_row['ground_pm25'],
-                'o3': o3_value,
-                'aqi': predictor.calculate_aqi(pm25_row['ground_pm25'], o3_value),
-                
-                # Features
-                **satellite_features,
-                **weather_features
-            }
-            chunk_results.append(row_data)
+    # Load dataset
+    df = pd.read_csv(data_path)
+    print(f"✅ Loaded dataset with {len(df)} records and {len(df.columns)} features")
     
-    return chunk_results
+    # Dry run mode - sample small subset
+    if dry_run:
+        df = df.sample(n=min(sample_size, len(df)), random_state=42)
+        print(f"🧪 DRY RUN MODE: Using {len(df)} records for testing")
+    
+    return df
 
 class AirQualityPredictor:
     """
     Multi-target air quality prediction model
-    Predicts PM2.5, O3, and AQI from satellite and weather data
+    Predicts PM2.5, O3, NO2, CO, and AQI from comprehensive dataset
     """
     
     def __init__(self):
         self.model = None
         self.scaler = StandardScaler()
         self.feature_names = []
-        self.target_names = ['pm25', 'o3', 'aqi']
-        self.spatial_indices = {}  # Cache for KDTree indices
+        # Updated target names to match your desired output structure
+        self.target_names = [
+            # Satellite measurements
+            'tempo_no2_no2_weight', 'tempo_hcho_hcho_weight', 'tempo_co_co_vmr', 'aerosol',
+            # Weather conditions  
+            'temperature_2m', 'merra2_wind_speed', 'precipitation',
+            # Air quality metrics (AQI will be calculated)
+            'ground_pm25', 'ground_o3', 'ground_no2', 'ground_co'
+        ]
+        self.dataset = None
         
-    def load_and_integrate_data(self, data_dir='data'):
+    def load_data(self, data_path='preprocessed_data/comprehensive_unified_dataset.csv', dry_run=False, sample_size=100):
         """
-        Load and integrate all data sources into a unified dataset
+        Load the comprehensive unified dataset
         """
-        print("🔄 Loading and integrating data sources...")
-        
-        # Load all datasets
-        datasets = {}
-        
-        # Load 90-day datasets
-        print("📊 Loading 90-day datasets...")
-        datasets['tempo_no2'] = pd.read_csv(f'{data_dir}/tempo_no2_90days.csv')
-        datasets['tempo_ch2o'] = pd.read_csv(f'{data_dir}/tempo_ch2o_90days.csv')
-        datasets['tropomi_co'] = pd.read_csv(f'{data_dir}/tropomi_co_90days.csv')
-        datasets['modis_aod'] = pd.read_csv(f'{data_dir}/modis_aod_90days.csv')
-        
-        # Weather data
-        datasets['merra2_temp'] = pd.read_csv(f'{data_dir}/merra2_temperature_90days.csv')
-        datasets['merra2_pbl'] = pd.read_csv(f'{data_dir}/merra2_pbl_90days.csv')
-        datasets['merra2_wind'] = pd.read_csv(f'{data_dir}/merra2_wind_90days.csv')
-        datasets['gpm_precip'] = pd.read_csv(f'{data_dir}/gpm_precipitation_90days.csv')
-        
-        # Ground truth
-        datasets['openaq_pm25'] = pd.read_csv(f'{data_dir}/openaq_pm25_90days.csv')
-        datasets['openaq_o3'] = pd.read_csv(f'{data_dir}/openaq_o3_90days.csv')
-        
-        print(f"✅ Loaded {len(datasets)} datasets")
-        
-        # Create unified dataset
-        unified_data = self.create_unified_dataset(datasets)
-        
-        return unified_data
+        self.dataset = load_comprehensive_dataset(data_path, dry_run, sample_size)
+        return self.dataset
     
-    def build_spatial_indices(self, datasets):
+    def analyze_dataset(self):
         """
-        Build KDTree spatial indices for all datasets to speed up nearest neighbor searches
+        Analyze the loaded dataset structure and quality
         """
-        print("🌐 Building spatial indices...")
-        for name, df in datasets.items():
-            if 'latitude' in df.columns and 'longitude' in df.columns:
-                coords = df[['latitude', 'longitude']].values
-                self.spatial_indices[name] = {
-                    'tree': KDTree(coords),
-                    'data': df
-                }
-        print(f"✅ Built spatial indices for {len(self.spatial_indices)} datasets")
-    
-    def process_pm25_chunk(self, pm25_chunk, o3_data, datasets):
-        """
-        Process a chunk of PM2.5 data in parallel
-        """
-        chunk_results = []
+        if self.dataset is None:
+            print("❌ No dataset loaded")
+            return
         
-        for _, pm25_row in pm25_chunk.iterrows():
-            # Find matching O3 measurement
-            o3_match = o3_data[
-                (o3_data['datetime'] == pm25_row['datetime']) &
-                (o3_data['latitude'] == pm25_row['latitude']) &
-                (o3_data['longitude'] == pm25_row['longitude'])
-            ]
-            
-            if o3_match.empty:
-                continue
-                
-            o3_value = o3_match.iloc[0]['ground_o3']
-            
-            # Find nearest satellite data (spatial and temporal matching)
-            satellite_features = self.get_nearest_satellite_data(
-                datasets, pm25_row['datetime'], 
-                pm25_row['latitude'], pm25_row['longitude']
-            )
-            
-            # Find nearest weather data
-            weather_features = self.get_nearest_weather_data(
-                datasets, pm25_row['datetime'],
-                pm25_row['latitude'], pm25_row['longitude']
-            )
-            
-            # Combine all features
-            if satellite_features and weather_features:
-                row_data = {
-                    'datetime': pm25_row['datetime'],
-                    'latitude': pm25_row['latitude'],
-                    'longitude': pm25_row['longitude'],
-                    'city': pm25_row['city'],
-                    
-                    # Targets
-                    'pm25': pm25_row['ground_pm25'],
-                    'o3': o3_value,
-                    'aqi': self.calculate_aqi(pm25_row['ground_pm25'], o3_value),
-                    
-                    # Features
-                    **satellite_features,
-                    **weather_features
-                }
-                chunk_results.append(row_data)
+        df = self.dataset
+        print(f"\n📊 DATASET ANALYSIS")
+        print(f"{'='*50}")
+        print(f"📋 Shape: {df.shape}")
         
-        return chunk_results
-    
-    def create_unified_dataset(self, datasets):
-        """
-        Create a unified dataset by spatially and temporally matching all sources
-        Optimized with multiprocessing and spatial indexing
-        """
-        print("🔗 Creating unified dataset...")
-        
-        # Convert datetime columns
-        for name, df in datasets.items():
-            df['datetime'] = pd.to_datetime(df['datetime'])
-        
-        # Build spatial indices for fast nearest neighbor searches
-        self.build_spatial_indices(datasets)
-        
-        # Get unique ground truth locations and times
-        pm25_data = datasets['openaq_pm25'].copy()
-        o3_data = datasets['openaq_o3'].copy()
-        
-        pm25_data['datetime'] = pd.to_datetime(pm25_data['datetime'])
-        o3_data['datetime'] = pd.to_datetime(o3_data['datetime'])
-        
-        # Split PM2.5 data into chunks for parallel processing
-        num_cores = min(cpu_count(), 8)  # Limit to 8 cores max
-        chunk_size = max(1, len(pm25_data) // num_cores)
-        pm25_chunks = [pm25_data.iloc[i:i+chunk_size] for i in range(0, len(pm25_data), chunk_size)]
-        
-        print(f"🚀 Processing {len(pm25_data)} samples using {num_cores} cores in {len(pm25_chunks)} chunks")
-        
-        # Process chunks in parallel
-        try:
-            with Pool(processes=num_cores) as pool:
-                # Create partial function with fixed arguments
-                process_func = partial(process_pm25_chunk_static, o3_data=o3_data, datasets=datasets)
-                
-                # Process all chunks in parallel
-                chunk_results = pool.map(process_func, pm25_chunks)
-        except Exception as e:
-            print(f"⚠️  Multiprocessing failed ({e}), falling back to sequential processing...")
-            # Fallback to sequential processing
-            chunk_results = []
-            for chunk in pm25_chunks:
-                result = process_pm25_chunk_static(chunk, o3_data, datasets)
-                chunk_results.append(result)
-        
-        # Flatten results from all chunks
-        base_data = []
-        for chunk_result in chunk_results:
-            base_data.extend(chunk_result)
-        
-        unified_df = pd.DataFrame(base_data)
-        print(f"✅ Created unified dataset with {len(unified_df)} records")
-        print(f"   Features: {len([c for c in unified_df.columns if c not in ['datetime', 'latitude', 'longitude', 'city', 'pm25', 'o3', 'aqi']])}")
-        print(f"   Targets: pm25, o3, aqi")
-        
-        return unified_df
-    
-    def get_nearest_satellite_data_fast(self, datasets, target_time, target_lat, target_lon):
-        """
-        Find nearest satellite measurements using spatial indexing (optimized)
-        """
-        features = {}
-        target_coords = np.array([[target_lat, target_lon]])
-        
-        # TEMPO NO2 (hourly)
-        if 'tempo_no2' in self.spatial_indices:
-            no2_match = self.find_nearest_measurement_fast(
-                'tempo_no2', target_time, target_coords, 'no2'
-            )
-            features['tempo_no2'] = no2_match if no2_match else np.nan
-        
-        # TEMPO CH2O (hourly)
-        if 'tempo_ch2o' in self.spatial_indices:
-            ch2o_match = self.find_nearest_measurement_fast(
-                'tempo_ch2o', target_time, target_coords, 'ch2o'
-            )
-            features['tempo_ch2o'] = ch2o_match if ch2o_match else np.nan
-        
-        # TROPOMI CO (daily)
-        if 'tropomi_co' in self.spatial_indices:
-            co_match = self.find_nearest_measurement_fast(
-                'tropomi_co', target_time, target_coords, 'co', time_tolerance_hours=12
-            )
-            features['tropomi_co'] = co_match if co_match else np.nan
-        
-        # MODIS AOD (twice daily)
-        if 'modis_aod' in self.spatial_indices:
-            aod_match = self.find_nearest_measurement_fast(
-                'modis_aod', target_time, target_coords, 'aod', time_tolerance_hours=6
-            )
-            features['modis_aod'] = aod_match if aod_match else np.nan
-        
-        return features
-    
-    def get_nearest_weather_data_fast(self, datasets, target_time, target_lat, target_lon):
-        """
-        Find nearest weather measurements using spatial indexing (optimized)
-        """
-        features = {}
-        target_coords = np.array([[target_lat, target_lon]])
-        
-        # MERRA-2 Temperature
-        if 'merra2_temp' in self.spatial_indices:
-            temp_match = self.find_nearest_measurement_fast(
-                'merra2_temp', target_time, target_coords, 'temperature_2m'
-            )
-            features['temperature_2m'] = temp_match if temp_match else np.nan
-        
-        # MERRA-2 PBL Height
-        if 'merra2_pbl' in self.spatial_indices:
-            pbl_match = self.find_nearest_measurement_fast(
-                'merra2_pbl', target_time, target_coords, 'pbl_height'
-            )
-            features['pbl_height'] = pbl_match if pbl_match else np.nan
-        
-        # MERRA-2 Wind
-        if 'merra2_wind' in self.spatial_indices:
-            wind_match = self.find_nearest_measurement_fast(
-                'merra2_wind', target_time, target_coords, ['wind_U', 'wind_V', 'wind_speed']
-            )
-            if wind_match:
-                if isinstance(wind_match, dict):
-                    features.update(wind_match)
+        # Handle datetime column safely
+        if 'datetime' in df.columns:
+            try:
+                # Convert to datetime if not already
+                df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
+                valid_dates = df['datetime'].dropna()
+                if len(valid_dates) > 0:
+                    print(f"📅 Date range: {valid_dates.min()} to {valid_dates.max()}")
                 else:
-                    features['wind_speed'] = wind_match
-        
-        # GPM Precipitation
-        if 'gpm_precip' in self.spatial_indices:
-            precip_match = self.find_nearest_measurement_fast(
-                'gpm_precip', target_time, target_coords, 'precipitation'
-            )
-            features['precipitation'] = precip_match if precip_match else 0.0
-        
-        return features
-    
-    def find_nearest_measurement_fast(self, dataset_name, target_time, target_coords, 
-                                    value_col, time_tolerance_hours=2, spatial_tolerance=1.0):
-        """
-        Find the nearest measurement using KDTree spatial indexing (optimized)
-        """
-        if dataset_name not in self.spatial_indices:
-            return None
-        
-        spatial_data = self.spatial_indices[dataset_name]
-        tree = spatial_data['tree']
-        df = spatial_data['data']
-        
-        # Time filtering first
-        time_diff = abs((df['datetime'] - target_time).dt.total_seconds() / 3600)
-        time_mask = time_diff <= time_tolerance_hours
-        
-        if not time_mask.any():
-            return None
-        
-        # Get time-filtered data and rebuild spatial index for this subset
-        time_filtered_df = df[time_mask].copy()
-        if len(time_filtered_df) == 0:
-            return None
-        
-        # Find nearest spatial neighbors from time-filtered data
-        time_filtered_coords = time_filtered_df[['latitude', 'longitude']].values
-        time_filtered_tree = KDTree(time_filtered_coords)
-        
-        # Find nearest neighbor
-        distances, indices = time_filtered_tree.query(target_coords, k=1)
-        
-        if distances[0] > spatial_tolerance:
-            # If no match within spatial tolerance, return closest anyway
-            pass
-        
-        closest_row = time_filtered_df.iloc[indices[0]]
-        
-        # Return value(s)
-        if isinstance(value_col, list):
-            return {col: closest_row[col] for col in value_col if col in closest_row}
+                    print("📅 No valid datetime values found")
+            except Exception as e:
+                print(f"📅 Datetime column exists but has issues: {str(e)}")
         else:
-            return closest_row[value_col] if value_col in closest_row else None
-    
-    def get_nearest_satellite_data(self, datasets, target_time, target_lat, target_lon):
-        """
-        Find nearest satellite measurements in space and time
-        """
-        features = {}
+            print("📅 No datetime column")
         
-        # TEMPO NO2 (hourly, daylight only)
-        tempo_no2 = datasets['tempo_no2']
-        no2_match = self.find_nearest_measurement(
-            tempo_no2, target_time, target_lat, target_lon, 'no2'
-        )
-        features['tempo_no2'] = no2_match if no2_match else np.nan
-        
-        # TEMPO CH2O
-        tempo_ch2o = datasets['tempo_ch2o']
-        ch2o_match = self.find_nearest_measurement(
-            tempo_ch2o, target_time, target_lat, target_lon, 'ch2o'
-        )
-        features['tempo_ch2o'] = ch2o_match if ch2o_match else np.nan
-        
-        # TROPOMI CO (daily)
-        tropomi_co = datasets['tropomi_co']
-        co_match = self.find_nearest_measurement(
-            tropomi_co, target_time, target_lat, target_lon, 'co', time_tolerance_hours=12
-        )
-        features['tropomi_co'] = co_match if co_match else np.nan
-        
-        # MODIS AOD (twice daily)
-        modis_aod = datasets['modis_aod']
-        aod_match = self.find_nearest_measurement(
-            modis_aod, target_time, target_lat, target_lon, 'aod', time_tolerance_hours=6
-        )
-        features['modis_aod'] = aod_match if aod_match else np.nan
-        
-        return features
-    
-    def get_nearest_weather_data(self, datasets, target_time, target_lat, target_lon):
-        """
-        Find nearest weather measurements
-        """
-        features = {}
-        
-        # MERRA-2 Temperature
-        temp_data = datasets['merra2_temp']
-        temp_match = self.find_nearest_measurement(
-            temp_data, target_time, target_lat, target_lon, 'temperature_2m'
-        )
-        features['temperature_2m'] = temp_match if temp_match else np.nan
-        
-        # MERRA-2 PBL Height
-        pbl_data = datasets['merra2_pbl']
-        pbl_match = self.find_nearest_measurement(
-            pbl_data, target_time, target_lat, target_lon, 'pbl_height'
-        )
-        features['pbl_height'] = pbl_match if pbl_match else np.nan
-        
-        # MERRA-2 Wind
-        wind_data = datasets['merra2_wind']
-        wind_match = self.find_nearest_measurement(
-            wind_data, target_time, target_lat, target_lon, ['wind_U', 'wind_V', 'wind_speed']
-        )
-        if wind_match:
-            if isinstance(wind_match, dict):
-                features.update(wind_match)
+        # Check target variables
+        print(f"\n🎯 TARGET VARIABLES:")
+        for target in self.target_names:
+            if target in df.columns:
+                non_null = df[target].notna().sum()
+                print(f"   {target:15}: {non_null:,} non-null ({non_null/len(df)*100:.1f}%)")
             else:
-                features['wind_speed'] = wind_match
+                print(f"   {target:15}: ❌ Missing")
         
-        # GPM Precipitation
-        precip_data = datasets['gpm_precip']
-        precip_match = self.find_nearest_measurement(
-            precip_data, target_time, target_lat, target_lon, 'precipitation'
-        )
-        features['precipitation'] = precip_match if precip_match else 0.0
+        # Check feature completeness
+        print(f"\n📈 FEATURE COMPLETENESS:")
+        feature_cols = [col for col in df.columns if col not in ['datetime', 'lat', 'lon'] + self.target_names]
+        for col in feature_cols[:10]:  # Show first 10 features
+            non_null = df[col].notna().sum()
+            print(f"   {col:20}: {non_null:,} non-null ({non_null/len(df)*100:.1f}%)")
         
-        return features
+        if len(feature_cols) > 10:
+            print(f"   ... and {len(feature_cols)-10} more features")
     
-    def find_nearest_measurement(self, df, target_time, target_lat, target_lon, 
-                               value_col, time_tolerance_hours=2, spatial_tolerance=1.0):
+    def prepare_features(self, df=None):
         """
-        Find the nearest measurement in space and time
+        Prepare features and targets from the comprehensive dataset
+        Uses only location/time as input features to predict everything else
         """
-        # Time filtering
-        time_diff = abs((df['datetime'] - target_time).dt.total_seconds() / 3600)
-        time_mask = time_diff <= time_tolerance_hours
+        if df is None:
+            df = self.dataset
         
-        if not time_mask.any():
-            return None
+        if df is None:
+            raise ValueError("No dataset loaded. Call load_data() first.")
         
-        # Spatial filtering
-        lat_diff = abs(df['latitude'] - target_lat)
-        lon_diff = abs(df['longitude'] - target_lon)
-        spatial_distance = np.sqrt(lat_diff**2 + lon_diff**2)
-        spatial_mask = spatial_distance <= spatial_tolerance
+        print("🔧 Preparing features and targets...")
+        print("🎯 NEW APPROACH: Using only location/time to predict satellite/weather/air quality")
         
-        # Combined filtering
-        combined_mask = time_mask & spatial_mask
+        # Convert datetime to useful features
+        if 'datetime' in df.columns:
+            df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
+            df['hour'] = df['datetime'].dt.hour
+            df['day_of_year'] = df['datetime'].dt.dayofyear
+            df['month'] = df['datetime'].dt.month
+            df['is_weekend'] = df['datetime'].dt.weekday >= 5
         
-        if not combined_mask.any():
-            # If no exact match, find closest in space within time window
-            time_filtered = df[time_mask]
-            if len(time_filtered) == 0:
-                return None
-            
-            lat_diff = abs(time_filtered['latitude'] - target_lat)
-            lon_diff = abs(time_filtered['longitude'] - target_lon)
-            spatial_distance = np.sqrt(lat_diff**2 + lon_diff**2)
-            closest_idx = spatial_distance.idxmin()
-            closest_row = time_filtered.loc[closest_idx]
+        # Use only basic location and time features as INPUT
+        basic_features = ['lat', 'lon', 'hour', 'day_of_year', 'month', 'is_weekend']
+        available_features = [col for col in basic_features if col in df.columns]
+        
+        print(f"📊 INPUT FEATURES (only location/time): {len(available_features)}")
+        for i, col in enumerate(available_features):
+            print(f"   {i+1:2d}. {col}")
+        
+        # Prepare features
+        X = df[available_features].copy()
+        
+        # Handle missing values
+        for col in X.columns:
+            if X[col].dtype in ['float64', 'int64']:
+                X[col] = X[col].fillna(X[col].median())
+            else:
+                X[col] = X[col].fillna(0)
+        
+        # Map target names to actual column names in dataset
+        target_mapping = {
+            # Satellite measurements
+            'tempo_no2': 'tempo_no2_no2_weight',
+            'tempo_ch2o': 'tempo_hcho_hcho_weight', 
+            'tropomi_co': 'tempo_co_co_vmr',
+            'modis_aod': 'aerosol',
+            # Weather conditions
+            'temperature_2m': 'temperature_2m',
+            'wind_speed': 'wind_speed',
+            'precipitation': 'precipitation',  # Will use 0 if not available
+            # Air quality
+            'pm25': 'ground_pm25',
+            'o3': 'ground_o3',
+            'no2': 'ground_no2',
+            'co': 'ground_co'
+        }
+        
+        # Find available targets in dataset
+        available_targets = []
+        target_columns = []
+        
+        for desired_name, actual_col in target_mapping.items():
+            if actual_col in df.columns:
+                available_targets.append(desired_name)
+                target_columns.append(actual_col)
+            else:
+                print(f"   ⚠️  {desired_name} ({actual_col}) not found in dataset")
+        
+        if not target_columns:
+            raise ValueError(f"No target columns found in dataset!")
+        
+        # Prepare targets
+        y = df[target_columns].copy()
+        y.columns = available_targets  # Rename to desired names
+        
+        # Fill missing target values
+        for col in y.columns:
+            if y[col].dtype in ['float64', 'int64']:
+                y[col] = y[col].fillna(y[col].median())
+            else:
+                y[col] = y[col].fillna(0)
+        
+        self.feature_names = available_features
+        self.target_names = available_targets
+        
+        print(f"✅ Features prepared: {X.shape}")
+        print(f"✅ Targets prepared: {y.shape}")
+        print(f"🎯 PREDICTION TARGETS:")
+        for target in available_targets:
+            print(f"   📊 {target}")
+        
+        return X, y
+    
+    def train_model(self, X, y, model_type='xgboost'):
+        """
+        Train multi-target regression model
+        """
+        print("🤖 Training multi-target air quality prediction model...")
+        print(f"📊 Dataset: {X.shape[0]} samples, {X.shape[1]} features")
+        print(f"🎯 Targets: {len(y.columns)} variables - {list(y.columns)}")
+        
+        start_time = time.time()
+        
+        # Split data: 70% train, 15% validation, 15% test
+        X_temp, X_test, y_temp, y_test = train_test_split(
+            X, y, test_size=0.15, random_state=42
+        )
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_temp, y_temp, test_size=0.176, random_state=42  # 0.176 * 0.85 ≈ 0.15
+        )
+        
+        print(f"📈 Data splits:")
+        print(f"   Training:   {X_train.shape[0]:,} samples ({X_train.shape[0]/X.shape[0]*100:.1f}%)")
+        print(f"   Validation: {X_val.shape[0]:,} samples ({X_val.shape[0]/X.shape[0]*100:.1f}%)")
+        print(f"   Test:       {X_test.shape[0]:,} samples ({X_test.shape[0]/X.shape[0]*100:.1f}%)")
+        
+        # Scale features
+        print("⚙️  Scaling features...")
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_val_scaled = self.scaler.transform(X_val)
+        X_test_scaled = self.scaler.transform(X_test)
+        
+        # Choose model
+        if model_type == 'xgboost':
+            print("🚀 Training XGBoost model...")
+            base_model = xgb.XGBRegressor(
+                n_estimators=100,  # Reduced for dry run
+                max_depth=6,
+                learning_rate=0.1,
+                random_state=42,
+                n_jobs=-1,
+                verbosity=0
+            )
         else:
-            # Find closest match within both time and space constraints
-            filtered_df = df[combined_mask]
-            closest_row = filtered_df.iloc[0]  # Take first match
+            print("🌲 Training Random Forest model...")
+            base_model = RandomForestRegressor(
+                n_estimators=50,  # Reduced for dry run
+                max_depth=10,
+                random_state=42,
+                n_jobs=-1
+            )
         
-        # Return value(s)
-        if isinstance(value_col, list):
-            return {col: closest_row[col] for col in value_col if col in closest_row}
+        # Multi-target wrapper
+        self.model = MultiOutputRegressor(base_model)
+        
+        # Train model
+        self.model.fit(X_train_scaled, y_train)
+        
+        training_time = time.time() - start_time
+        print(f"✅ Model training completed in {training_time:.1f} seconds!")
+        
+        # Evaluate on all splits
+        print("\\n📊 MODEL PERFORMANCE:")
+        
+        # Training performance
+        y_train_pred = self.model.predict(X_train_scaled)
+        print("\\n🔵 TRAINING SET:")
+        self._evaluate_predictions(y_train, y_train_pred)
+        
+        # Validation performance
+        y_val_pred = self.model.predict(X_val_scaled)
+        print("\\n🟡 VALIDATION SET:")
+        self._evaluate_predictions(y_val, y_val_pred)
+        
+        # Test performance
+        y_test_pred = self.model.predict(X_test_scaled)
+        print("\\n🔴 TEST SET:")
+        self._evaluate_predictions(y_test, y_test_pred)
+        
+        return self.model
+    
+    def _evaluate_predictions(self, y_true, y_pred):
+        """Evaluate model predictions"""
+        for i, target in enumerate(self.target_names):
+            if i < y_pred.shape[1]:  # Check if prediction exists for this target
+                r2 = r2_score(y_true.iloc[:, i], y_pred[:, i])
+                rmse = np.sqrt(mean_squared_error(y_true.iloc[:, i], y_pred[:, i]))
+                mae = mean_absolute_error(y_true.iloc[:, i], y_pred[:, i])
+                print(f"   {target:15}: R² = {r2:.3f}, RMSE = {rmse:.2f}, MAE = {mae:.2f}")
+    
+    def predict_comprehensive(self, lat, lon, datetime_str):
+        """
+        Make comprehensive predictions from lat/lon/datetime
+        Returns the exact structure you requested
+        """
+        if self.model is None:
+            raise ValueError("Model not trained yet!")
+        
+        # Parse datetime
+        import pandas as pd
+        from datetime import datetime
+        
+        if isinstance(datetime_str, str):
+            dt = pd.to_datetime(datetime_str)
         else:
-            return closest_row[value_col] if value_col in closest_row else None
+            dt = datetime_str
+        
+        # Prepare input features
+        sample_features = {
+            'lat': lat,
+            'lon': lon,
+            'hour': dt.hour,
+            'day_of_year': dt.timetuple().tm_yday,
+            'month': dt.month,
+            'is_weekend': dt.weekday() >= 5
+        }
+        
+        # Create feature vector
+        X = np.array([[sample_features.get(col, 0.0) for col in self.feature_names]])
+        
+        # Scale and predict
+        X_scaled = self.scaler.transform(X)
+        predictions = self.model.predict(X_scaled)[0]
+        
+        # Map predictions to target names
+        pred_dict = {}
+        for i, target in enumerate(self.target_names):
+            if i < len(predictions):
+                pred_dict[target] = predictions[i]
+        
+        # Calculate AQI from predicted PM2.5 and O3
+        pm25 = pred_dict.get('pm25', 0)
+        o3 = pred_dict.get('o3', 0)
+        aqi = self.calculate_aqi(pm25, o3)
+        
+        # Structure the response exactly as you requested
+        result = {
+            "satellite_data": {
+                "tempo_no2": pred_dict.get('tempo_no2', 0),
+                "tempo_ch2o": pred_dict.get('tempo_ch2o', 0),
+                "tropomi_co": pred_dict.get('tropomi_co', 0),
+                "modis_aod": pred_dict.get('modis_aod', 0)
+            },
+            "weather_data": {
+                "temperature_2m": pred_dict.get('temperature_2m', 0),
+                "pbl_height": 800,  # Default value - add if available in dataset
+                "wind_speed": pred_dict.get('wind_speed', 0),
+                "precipitation": pred_dict.get('precipitation', 0)
+            },
+            "air_quality": {
+                "pm25": pred_dict.get('pm25', 0),
+                "o3": pred_dict.get('o3', 0),
+                "aqi": aqi  # CALCULATED from PM2.5 + O3
+            }
+        }
+        
+        return result
     
     def calculate_aqi(self, pm25, o3):
         """
         Calculate Air Quality Index from PM2.5 and O3
-        Simplified AQI calculation
         """
         # PM2.5 AQI breakpoints (µg/m³)
         if pm25 <= 12:
@@ -507,222 +388,130 @@ class AirQualityPredictor:
         # Return maximum AQI (worst pollutant determines overall AQI)
         return max(pm25_aqi, o3_aqi)
     
-    def prepare_features(self, df):
-        """
-        Prepare features for model training
-        """
-        # Select feature columns
-        feature_cols = [
-            'tempo_no2', 'tempo_ch2o', 'tropomi_co', 'modis_aod',
-            'temperature_2m', 'pbl_height', 'wind_speed', 'precipitation'
-        ]
-        
-        # Add temporal features
-        df['hour'] = pd.to_datetime(df['datetime']).dt.hour
-        df['day_of_year'] = pd.to_datetime(df['datetime']).dt.dayofyear
-        df['is_weekend'] = pd.to_datetime(df['datetime']).dt.weekday >= 5
-        
-        feature_cols.extend(['hour', 'day_of_year', 'is_weekend'])
-        
-        # Handle missing values
-        X = df[feature_cols].fillna(df[feature_cols].median())
-        y = df[['pm25', 'o3', 'aqi']]
-        
-        self.feature_names = feature_cols
-        
-        return X, y
+def run_dry_run_pipeline(sample_size=100, model_type='xgboost'):
+    """
+    Run a complete dry run of the air quality prediction pipeline
+    """
+    print("🧪 STARTING DRY RUN PIPELINE")
+    print("="*60)
     
-    def train_model(self, X, y):
-        """
-        Train XGBoost multi-target regression model with proper train/val/test splits
-        """
-        print("🤖 Training XGBoost multi-target air quality model...")
-        print(f"📊 Dataset size: {X.shape[0]} samples, {X.shape[1]} features")
+    try:
+        # Initialize predictor
+        predictor = AirQualityPredictor()
         
-        start_time = time.time()
+        # Load data in dry run mode
+        print("\\n📊 STEP 1: Loading Data")
+        predictor.load_data(dry_run=True, sample_size=sample_size)
         
-        # Split data: 60% train, 20% validation, 20% test
-        X_temp, X_test, y_temp, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=None
-        )
-        X_train, X_val, y_train, y_val = train_test_split(
-            X_temp, y_temp, test_size=0.25, random_state=42  # 0.25 * 0.8 = 0.2 of total
-        )
+        # Analyze dataset
+        print("\\n🔍 STEP 2: Dataset Analysis")
+        predictor.analyze_dataset()
         
-        print(f"📈 Data splits:")
-        print(f"   Training:   {X_train.shape[0]:,} samples ({X_train.shape[0]/X.shape[0]*100:.1f}%)")
-        print(f"   Validation: {X_val.shape[0]:,} samples ({X_val.shape[0]/X.shape[0]*100:.1f}%)")
-        print(f"   Test:       {X_test.shape[0]:,} samples ({X_test.shape[0]/X.shape[0]*100:.1f}%)")
-        
-        # Scale features
-        print("⚙️  Scaling features...")
-        X_train_scaled = self.scaler.fit_transform(X_train)
-        X_val_scaled = self.scaler.transform(X_val)
-        X_test_scaled = self.scaler.transform(X_test)
-        
-        # Configure XGBoost for multi-target regression
-        print("🚀 Training XGBoost model...")
-        xgb_params = {
-            'n_estimators': 200,
-            'max_depth': 8,
-            'learning_rate': 0.1,
-            'subsample': 0.8,
-            'colsample_bytree': 0.8,
-            'random_state': 42,
-            'n_jobs': -1,
-            'verbosity': 0
-        }
-        
-        # Use MultiOutputRegressor for multi-target
-        self.model = MultiOutputRegressor(
-            xgb.XGBRegressor(**xgb_params)
-        )
+        # Prepare features
+        print("\\n🔧 STEP 3: Feature Preparation")
+        X, y = predictor.prepare_features()
         
         # Train model
-        self.model.fit(X_train_scaled, y_train)
+        print("\\n🤖 STEP 4: Model Training")
+        model = predictor.train_model(X, y, model_type=model_type)
         
-        training_time = time.time() - start_time
-        print(f"✅ Model training completed in {training_time:.1f} seconds!")
+        # Test comprehensive prediction
+        print("\\n🎯 STEP 5: Comprehensive Prediction Test")
+        # Use sample location and time
+        sample_lat = -61.0
+        sample_lon = 64.375
+        sample_datetime = "2025-09-01 14:00:00"
         
-        # Evaluate on all splits
-        print("\n📊 Model Performance:")
+        print(f"📍 Test Location: {sample_lat}, {sample_lon}")
+        print(f"🕐 Test Time: {sample_datetime}")
         
-        # Training performance
-        y_train_pred = self.model.predict(X_train_scaled)
-        print("\n🔵 TRAINING SET:")
-        self._evaluate_predictions(y_train, y_train_pred)
+        prediction = predictor.predict_comprehensive(sample_lat, sample_lon, sample_datetime)
         
-        # Validation performance
-        y_val_pred = self.model.predict(X_val_scaled)
-        print("\n🟡 VALIDATION SET:")
-        self._evaluate_predictions(y_val, y_val_pred)
+        print("\\n📊 COMPREHENSIVE PREDICTION RESULT:")
+        print("🛰️  Satellite Data:")
+        for key, value in prediction["satellite_data"].items():
+            print(f"   {key}: {value:.3e}")
         
-        # Test performance
-        y_test_pred = self.model.predict(X_test_scaled)
-        print("\n🔴 TEST SET:")
-        self._evaluate_predictions(y_test, y_test_pred)
+        print("\\n🌤️  Weather Data:")
+        for key, value in prediction["weather_data"].items():
+            print(f"   {key}: {value:.2f}")
         
-        # Feature importance
-        print("\n🎯 FEATURE IMPORTANCE (Top 5):")
-        self._show_feature_importance()
+        print("\\n🏭 Air Quality:")
+        for key, value in prediction["air_quality"].items():
+            print(f"   {key}: {value:.2f}")
         
-        return self.model
+        print("\\n✅ DRY RUN COMPLETED SUCCESSFULLY!")
+        print("🚀 Pipeline is ready for full-scale training!")
+        
+        return predictor
+        
+    except Exception as e:
+        print(f"\\n❌ DRY RUN FAILED: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
     
-    def _evaluate_predictions(self, y_true, y_pred):
-        """Evaluate model predictions"""
-        for i, target in enumerate(self.target_names):
-            r2 = r2_score(y_true.iloc[:, i], y_pred[:, i])
-            rmse = np.sqrt(mean_squared_error(y_true.iloc[:, i], y_pred[:, i]))
-            mae = mean_absolute_error(y_true.iloc[:, i], y_pred[:, i])
-            print(f"   {target.upper():4}: R² = {r2:.3f}, RMSE = {rmse:.2f}, MAE = {mae:.2f}")
+def run_full_pipeline(model_type='xgboost'):
+    """
+    Run the complete air quality prediction pipeline with full dataset
+    """
+    print("🚀 STARTING FULL PIPELINE")
+    print("="*60)
     
-    def _show_feature_importance(self):
-        """Show feature importance from XGBoost"""
-        try:
-            # Get feature importance from first estimator (they should be similar)
-            importance = self.model.estimators_[0].feature_importances_
-            feature_importance = list(zip(self.feature_names, importance))
-            feature_importance.sort(key=lambda x: x[1], reverse=True)
-            
-            for feature, importance in feature_importance[:5]:
-                print(f"   {feature:15}: {importance:.3f}")
-        except Exception as e:
-            print(f"   Could not display feature importance: {str(e)}")
-    
-    def predict(self, satellite_data, weather_data, location, time):
-        """
-        Make air quality predictions for new data
-        """
-        if self.model is None:
-            raise ValueError("Model not trained yet!")
+    try:
+        # Initialize predictor
+        predictor = AirQualityPredictor()
         
-        # Prepare input features
-        features = {
-            'tempo_no2': satellite_data.get('no2', np.nan),
-            'tempo_ch2o': satellite_data.get('ch2o', np.nan),
-            'tropomi_co': satellite_data.get('co', np.nan),
-            'modis_aod': satellite_data.get('aod', np.nan),
-            'temperature_2m': weather_data.get('temperature', np.nan),
-            'pbl_height': weather_data.get('pbl_height', np.nan),
-            'wind_speed': weather_data.get('wind_speed', np.nan),
-            'precipitation': weather_data.get('precipitation', 0.0),
-            'hour': time.hour,
-            'day_of_year': time.timetuple().tm_yday,
-            'is_weekend': time.weekday() >= 5
-        }
+        # Load full data
+        print("\\n📊 STEP 1: Loading Full Dataset")
+        predictor.load_data(dry_run=False)
         
-        # Create feature vector
-        X = np.array([[features[col] for col in self.feature_names]])
+        # Analyze dataset
+        print("\\n🔍 STEP 2: Dataset Analysis")
+        predictor.analyze_dataset()
         
-        # Handle missing values
-        X = np.nan_to_num(X, nan=0.0)
+        # Prepare features
+        print("\\n🔧 STEP 3: Feature Preparation")
+        X, y = predictor.prepare_features()
         
-        # Scale and predict
-        X_scaled = self.scaler.transform(X)
-        predictions = self.model.predict(X_scaled)[0]
+        # Train model
+        print("\\n🤖 STEP 4: Model Training")
+        model = predictor.train_model(X, y, model_type=model_type)
         
-        return {
-            'pm25': predictions[0],
-            'o3': predictions[1], 
-            'aqi': predictions[2],
-            'health_risk': self.get_health_risk(predictions[2]),
-            'location': location,
-            'timestamp': time
-        }
-    
-    def get_health_risk(self, aqi):
-        """
-        Convert AQI to health risk category
-        """
-        if aqi <= 50:
-            return "Good"
-        elif aqi <= 100:
-            return "Moderate"
-        elif aqi <= 150:
-            return "Unhealthy for Sensitive Groups"
-        elif aqi <= 200:
-            return "Unhealthy"
-        else:
-            return "Very Unhealthy"
+        print("\\n✅ FULL PIPELINE COMPLETED SUCCESSFULLY!")
+        print("🎯 Model is ready for production use!")
+        
+        return predictor
+        
+    except Exception as e:
+        print(f"\\n❌ FULL PIPELINE FAILED: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 def main():
     """
-    Demonstrate the modeling approach
+    Main function - run dry run by default, full pipeline optionally
     """
     print("🚀 NASA SPACE APPS - AIR QUALITY PREDICTION MODEL")
     print("=" * 60)
     
-    # Initialize predictor
-    predictor = AirQualityPredictor()
+    import sys
     
-    # Load and integrate data
-    try:
-        unified_data = predictor.load_and_integrate_data()
-        
-        if len(unified_data) > 0:
-            print(f"\n📊 Unified Dataset Summary:")
-            print(f"   Records: {len(unified_data)}")
-            print(f"   Cities: {unified_data['city'].nunique()}")
-            print(f"   Time range: {unified_data['datetime'].min()} to {unified_data['datetime'].max()}")
-            
-            # Prepare features
-            X, y = predictor.prepare_features(unified_data)
-            
-            if len(X) > 10:  # Need minimum data for training
-                # Train model
-                model = predictor.train_model(X, y)
-                
-                print(f"\n🎯 MODEL READY FOR DEPLOYMENT!")
-                print(f"   Input: Satellite + Weather data")
-                print(f"   Output: PM2.5, O₃, AQI predictions")
-                print(f"   Use case: Real-time air quality forecasting")
-            else:
-                print("⚠️  Insufficient data for model training")
-        else:
-            print("❌ No unified data created - check data integration")
-            
-    except Exception as e:
-        print(f"❌ Error: {str(e)}")
+    # Check command line arguments
+    if len(sys.argv) > 1 and sys.argv[1] == '--full':
+        print("🎯 Running FULL PIPELINE with complete dataset...")
+        predictor = run_full_pipeline(model_type='xgboost')
+    else:
+        print("🧪 Running DRY RUN with 100 samples...")
+        print("   (Use --full flag for complete dataset)")
+        predictor = run_dry_run_pipeline(sample_size=100, model_type='xgboost')
+    
+    if predictor:
+        print("\\n🎉 SUCCESS! Model pipeline completed.")
+        print("📊 Model is trained and ready for predictions!")
+    else:
+        print("\\n💥 FAILED! Check the error messages above.")
 
 if __name__ == "__main__":
     main()
