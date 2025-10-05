@@ -22,11 +22,6 @@ CORS(app)
 input_agent = InputAgent()
 output_agent = OutputAgent()
 
-# Ensure data is available from GCS
-print("📥 Ensuring data availability from GCS...")
-data_available = ensure_data_downloaded()
-if not data_available:
-    print("⚠️  Warning: Could not download data from GCS, will attempt to use local data")
 
 # Initialize ML model and geocoding service
 print("🚀 Initializing Air Quality Prediction Model...")
@@ -100,14 +95,18 @@ def get_weather_metrics():
         
         # Get comprehensive predictions
         predictions = predictor.predict_comprehensive(lat, lon, current_time)
-        
+
+        # Convert numpy types to native Python types and round to 2 decimal places
+        metrics = predictions['frontend_metrics']
+        converted_metrics = {k: round(float(v), 2) if hasattr(v, 'item') else v for k, v in metrics.items()}
+
         # Return just the frontend metrics
         return jsonify({
             'status': 'success',
             'location': default_location,
             'coordinates': {'lat': lat, 'lon': lon},
             'timestamp': current_time,
-            'metrics': predictions['frontend_metrics']
+            'metrics': converted_metrics
         })
         
     except Exception as e:
@@ -1010,5 +1009,5 @@ if __name__ == "__main__":
     # Start real-time monitoring
     realtime_data_source.start_monitoring(alert_system)
     
-    port = int(os.getenv('PORT', 5000))
+    port = int(os.getenv('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
