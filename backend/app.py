@@ -3,6 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import json
+import numpy as np
 from datetime import datetime
 from utils import InputAgent, OutputAgent
 from utils.alert_system import alert_system, AlertType, AlertSeverity
@@ -96,9 +97,18 @@ def get_weather_metrics():
         # Get comprehensive predictions
         predictions = predictor.predict_comprehensive(lat, lon, current_time)
 
+        def convert_numpy_values(obj):
+            if hasattr(obj, 'item'):  # Handle numpy scalar
+                return round(float(obj), 2)
+            elif isinstance(obj, dict):  # Handle nested dictionaries
+                return {k: convert_numpy_values(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple)):  # Handle lists and tuples
+                return [convert_numpy_values(item) for item in obj]
+            return obj
+
         # Convert numpy types to native Python types and round to 2 decimal places
         metrics = predictions['frontend_metrics']
-        converted_metrics = {k: round(float(v), 2) if hasattr(v, 'item') else v for k, v in metrics.items()}
+        converted_metrics = convert_numpy_values(metrics)
 
         # Return just the frontend metrics
         return jsonify({
@@ -200,12 +210,26 @@ def extract_parameters():
             
             # Get model predictions
             predictions = predictor.predict_comprehensive(lat, lon, datetime_str)
+            
+            def convert_numpy_values(obj):
+                if hasattr(obj, 'item'):  # Handle numpy scalar
+                    return round(float(obj), 2)
+                elif isinstance(obj, dict):  # Handle nested dictionaries
+                    return {k: convert_numpy_values(v) for k, v in obj.items()}
+                elif isinstance(obj, (list, tuple)):  # Handle lists and tuples
+                    return [convert_numpy_values(item) for item in obj]
+                return obj
+            
+            # Convert all numpy values in the predictions dictionary
+            predictions = convert_numpy_values(predictions)
             app.logger.info("Model predictions generated successfully")
             
         else:
             app.logger.warning(f"Could not geocode location: {location_name}, using default coordinates")
             # Fallback to default coordinates (New York)
             predictions = predictor.predict_comprehensive(40.7128, -74.0060, datetime_str)
+            # Convert all numpy values in the predictions dictionary
+            predictions = convert_numpy_values(predictions)
         
         # Generate response using Output Agent
         result = output_agent.analyze_predictions(predictions, extracted_params)
@@ -1009,5 +1033,5 @@ if __name__ == "__main__":
     # Start real-time monitoring
     realtime_data_source.start_monitoring(alert_system)
     
-    port = int(os.getenv('PORT', 5000))
+    port = int(os.getenv('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
