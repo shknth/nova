@@ -72,9 +72,9 @@ const LandingPage = ({ onQuerySubmit }) => {
               </span>
               <span
                 className="example-item clickable"
-                onClick={() => handleExampleClick("What's the air quality forecast for tomorrow morning?")}
+                onClick={() => handleExampleClick("What's the air quality forecast for tomorrow morning in east wall park?")}
               >
-                "What's the air quality forecast for tomorrow morning?"
+                "What's the air quality forecast for tomorrow morning in east wall park?"
               </span>
             </div>
           </div>
