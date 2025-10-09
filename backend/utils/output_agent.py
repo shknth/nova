@@ -257,8 +257,8 @@ Now generate your response:"""
                 vis_config['data'] = self._extract_visualization_data(
                     predictions=predictions,
                     vis_type=matched_vis_type,
-                    latitude=latitude,
-                    longitude=longitude,
+                    lat=latitude,
+                    lon=longitude,
                     location_name=location_name,
                     suggestion=suggestion_lower
                 )
