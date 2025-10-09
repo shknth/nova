@@ -202,7 +202,18 @@ def extract_parameters():
         logger.info("Getting model predictions...")
         
         # Extract location and datetime from parameters
-        location_name = extracted_params.get('location', 'New York')  # Default location
+        location_name = extracted_params.get('location')  # Don't provide default
+        if not location_name:
+            logger.error("No location found in prompt")
+            return jsonify({
+                'status_code': 400,
+                'display_text': "I couldn't find a location in your request. Could you please mention which area you'd like to know about? For example: 'How is the air quality in Dublin?' or 'What's the pollution level in Galway?'",
+                'metadata': {
+                    'status': 'error',
+                    'error': 'Location missing in prompt'
+                }
+            }), 400
+            
         datetime_str = extracted_params.get('datetime', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))  # Default time
         
         logger.info(f"Location: {location_name}, DateTime: {datetime_str}")
