@@ -14,6 +14,7 @@ function App() {
   const [aiResponse, setAiResponse] = useState('');
   const [apiData, setApiData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusCode, setStatusCode] = useState(null);
 
   const handleQuerySubmit = async (query) => {
     // Validate query input
@@ -37,11 +38,13 @@ function App() {
       console.log(JSON.stringify(response, null, 2));
       console.log('================================================================================');
 
-      // Extract display_text from the response
+      // Extract display_text and status code from the response
       const displayText = response.display_text || "I couldn't process your query. Please try again.";
+      const apiStatusCode = response.statusCode || null;
 
       setAiResponse(displayText);
       setApiData(response); // Store the full API response
+      setStatusCode(apiStatusCode); // Store the status code
       setCurrentScreen('response');
     } catch (error) {
       console.error('❌ Error submitting query:', error);
@@ -102,6 +105,7 @@ function App() {
           <ResponseScreen
             userQuery={userQuery}
             aiResponse={aiResponse}
+            statusCode={statusCode}
             onViewDashboard={handleViewDashboard}
             onNewQuery={handleNewQuery}
           />

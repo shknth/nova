@@ -167,7 +167,11 @@ class ApiService {
   async extractParameters(prompt) {
     try {
       const response = await apiClient.post('/extract-parameters', { prompt });
-      return response.data;
+      // Return both data and status code
+      return {
+        ...response.data,
+        statusCode: response.status
+      };
     } catch (error) {
       throw new Error('Failed to extract parameters from query');
     }

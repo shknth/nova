@@ -6,10 +6,13 @@ import { useTheme } from '../contexts/ThemeContext';
 import ChatInput from './ChatInput';
 import './ResponseScreen.css';
 
-const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) => {
+const ResponseScreen = ({ userQuery, aiResponse, statusCode, onViewDashboard, onNewQuery }) => {
   const { isDark } = useTheme();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const synthRef = useRef(window.speechSynthesis);
+
+  // Enable dashboard button only if status code is 200
+  const isDashboardEnabled = statusCode === 200;
 
   // Cleanup speech synthesis on unmount
   useEffect(() => {
@@ -142,6 +145,8 @@ const ResponseScreen = ({ userQuery, aiResponse, onViewDashboard, onNewQuery }) 
                 <button
                   className="dashboard-button primary"
                   onClick={onViewDashboard}
+                  disabled={!isDashboardEnabled}
+                  title={!isDashboardEnabled ? 'Dashboard unavailable - query processing failed' : 'View Dashboard'}
                 >
                   <FontAwesomeIcon icon={faChartBar} />
                   View Dashboard
