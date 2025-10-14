@@ -5,6 +5,7 @@ NOVA is a web application developed for the NASA Space Apps Challenge 2025, addr
 ## Project Overview
 
 NOVA leverages NASA Earth observation data to predict and visualize air quality trends, helping users make informed decisions about outdoor activities and health precautions. The application combines satellite data with machine learning to provide accurate air quality forecasts and visualizations.
+The project is live here: https://nova-frontend-1086273935477.europe-west1.run.app/
 
 ### Key Features
 
@@ -58,13 +59,6 @@ NOVA leverages NASA Earth observation data to predict and visualize air quality 
    python app.py
    ```
    The backend API will be available at http://localhost:5000
-
-## API Endpoints
-
-- `GET /api/health`: Health check endpoint
-- `GET /api/data`: Get current air quality data and forecasts
-- `POST /api/predict`: Get predictions based on input features
-- `GET /api/model/info`: Get information about the ML model
 
 ## Project Structure
 
