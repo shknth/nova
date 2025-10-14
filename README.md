@@ -102,3 +102,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - NASA for providing Earth observation data
 - The Space Apps Challenge for the opportunity to contribute to cleaner, safer skies
+- OpenAQ, MERRA for the open source dataset
